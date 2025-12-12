@@ -61,9 +61,9 @@ export const getWorkerProfile = async (req, res, next) => {
   const workerId = req.params.id || req.user.id;
   try {
     const result = await query(
-      `SELECT u.id, u.name, u.email, u.role, u.phone, u.profile_image,
+      `SELECT u.id, u.name, u.email, u.role, u.phone, u.profile_image, u.address,
               wp.bio, wp.skills, wp.hourly_rate, wp.availability, wp.rating, wp.total_reviews, wp.completed_jobs,
-              wp.title, wp.years_of_experience, wp.address, wp.service_location, wp.profile_picture
+              wp.title, wp.years_of_experience, wp.service_location
        FROM users u
        LEFT JOIN worker_profiles wp ON wp.user_id = u.id
        WHERE u.id=$1`,
@@ -80,15 +80,16 @@ export const updateWorkerProfile = async (req, res, next) => {
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   const { name, phone, bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location } = req.body;
   try {
-    // Update user name/phone if provided
-    if (name || phone) {
+    // Update user name/phone/address if provided
+    if (name || phone || address) {
       await query(
         `UPDATE users SET 
           name = COALESCE($1, name), 
-          phone = COALESCE($2, phone), 
+          phone = COALESCE($2, phone),
+          address = COALESCE($3, address),
           updated_at = NOW() 
-         WHERE id = $3`,
-        [name || null, phone || null, req.user.id]
+         WHERE id = $4`,
+        [name || null, phone || null, address || null, req.user.id]
       );
     }
 
@@ -99,10 +100,10 @@ export const updateWorkerProfile = async (req, res, next) => {
       // ID doesn't exist, INSERT
       const result = await query(
         `INSERT INTO worker_profiles 
-           (user_id, bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           (user_id, bio, skills, hourly_rate, availability, title, years_of_experience, service_location)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING *`,
-        [req.user.id, bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location]
+        [req.user.id, bio, skills, hourly_rate, availability, title, years_of_experience, service_location]
       );
       return res.json(result.rows[0]);
     } else {
@@ -115,12 +116,11 @@ export const updateWorkerProfile = async (req, res, next) => {
                availability = COALESCE($4, availability),
                title = COALESCE($5, title),
                years_of_experience = COALESCE($6, years_of_experience),
-               address = COALESCE($7, address),
-               service_location = COALESCE($8, service_location),
+               service_location = COALESCE($7, service_location),
                updated_at = CURRENT_TIMESTAMP
-           WHERE user_id=$9
+           WHERE user_id=$8
            RETURNING *`,
-        [bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location, req.user.id]
+        [bio, skills, hourly_rate, availability, title, years_of_experience, service_location, req.user.id]
       );
       res.json(result.rows[0]);
     }
@@ -134,26 +134,13 @@ export const getWorkerStats = async (req, res, next) => {
     const workerId = req.user.id;
     // Get profile stats
     const profileRes = await query(
-      `SELECT rating, completed_jobs FROM worker_profiles WHERE user_id = $1`,
+      `SELECT rating, completed_jobs, total_reviews FROM worker_profiles WHERE user_id = $1`,
       [workerId]
     );
-    const profile = profileRes.rows[0] || { rating: 0, completed_jobs: 0 };
-
-    // Get total earnings (sum of completed & paid jobs)
-    const earningsRes = await query(
-      `SELECT COALESCE(SUM(total_price), 0) as total_earnings 
-       FROM bookings 
-       WHERE worker_id = $1 AND status = 'completed'`, // simple check for now, ideally check payment_status='paid' too but strict rules say minimize assumptions. DB has payment_status default 'pending'.
-      [workerId]
-    );
-    // Note: Assuming 'completed' job implies earning. If payment_status is robust, use it. 
-    // DB default is pending. Let's stick to status='completed' for simplicity unless payment flow is fully built.
-
-    // Get jobs this week (start of week calculation)
-    // Simple count for now
+    const profile = profileRes.rows[0] || { rating: 0, completed_jobs: 0, total_reviews: 0 };
 
     res.json({
-      total_earnings: parseFloat(earningsRes.rows[0].total_earnings),
+      total_reviews: parseInt(profile.total_reviews || 0),
       completed_jobs: profile.completed_jobs,
       rating: parseFloat(profile.rating)
     });
@@ -183,10 +170,11 @@ export const getWorkerJobs = async (req, res, next) => {
 
     const queryStr = `
       SELECT b.*, 
-             s.name as service_name, 
-             u.name as client_name, u.profile_image as client_image
+             COALESCE(s.name, 'General Service') as service_name, 
+             u.name as client_name, u.profile_image as client_image,
+             u.phone as client_phone, u.email as client_email
       FROM bookings b
-      JOIN services s ON b.service_id = s.services_id
+      LEFT JOIN services s ON b.service_id = s.services_id
       JOIN users u ON b.client_id = u.id
       WHERE b.worker_id = $1 ${statusClause}
       ORDER BY b.booking_date DESC
@@ -195,6 +183,7 @@ export const getWorkerJobs = async (req, res, next) => {
     const result = await query(queryStr, params);
     res.json(result.rows);
   } catch (err) {
+    console.error('Error fetching worker jobs:', err);
     next(err);
   }
 };
@@ -249,13 +238,61 @@ export const getSavedClients = async (req, res, next) => {
   }
 };
 
-export const listWorkers = async (_req, res, next) => {
+export const listWorkers = async (req, res, next) => {
   try {
+    // Get query parameters for filtering
+    const { search, category, min_price, max_price, min_rating, location } = req.query;
+
+    let whereClause = `WHERE u.role='worker' AND u.is_active = TRUE`;
+    const params = [];
+    let paramIndex = 1;
+
+    // Add filtering logic
+    if (search) {
+      params.push(`%${search}%`);
+      whereClause += ` AND (u.name ILIKE $${paramIndex} OR wp.title ILIKE $${paramIndex} OR wp.bio ILIKE $${paramIndex})`;
+      paramIndex++;
+    }
+
+    if (category) {
+      params.push(category);
+      whereClause += ` AND $${paramIndex} = ANY(wp.skills)`;
+      paramIndex++;
+    }
+
+    if (min_price) {
+      params.push(parseFloat(min_price));
+      whereClause += ` AND wp.hourly_rate >= $${paramIndex}`;
+      paramIndex++;
+    }
+
+    if (max_price) {
+      params.push(parseFloat(max_price));
+      whereClause += ` AND wp.hourly_rate <= $${paramIndex}`;
+      paramIndex++;
+    }
+
+    if (min_rating) {
+      params.push(parseFloat(min_rating));
+      whereClause += ` AND wp.rating >= $${paramIndex}`;
+      paramIndex++;
+    }
+
     const result = await query(
-      `SELECT u.id, u.name, u.profile_image, wp.skills, wp.hourly_rate, wp.rating, wp.total_reviews
+      `SELECT u.id, u.name, 
+              COALESCE(u.profile_image, 'https://via.placeholder.com/300x200?text=Worker') as image_url, 
+              wp.skills, 
+              COALESCE(wp.hourly_rate, 25) as hourly_rate, 
+              COALESCE(wp.rating, 0) as rating, 
+              COALESCE(wp.total_reviews, 0) as rating_count,
+              COALESCE(wp.title, 'Service Professional') as role,
+              wp.bio as description,
+              wp.service_location as location
        FROM users u
-       JOIN worker_profiles wp ON wp.user_id = u.id
-       WHERE u.role='worker' AND u.is_active = TRUE`
+       LEFT JOIN worker_profiles wp ON wp.user_id = u.id
+       ${whereClause}
+       ORDER BY wp.rating DESC NULLS LAST, wp.total_reviews DESC NULLS LAST`,
+      params
     );
     res.json(result.rows);
   } catch (err) {

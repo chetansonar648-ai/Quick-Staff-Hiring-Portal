@@ -1,7 +1,8 @@
 import axios from 'axios'
 
+// Use /api base - Vite proxy will forward to backend
 const instance = axios.create({
-  baseURL: 'http://localhost:4000/api'
+  baseURL: '/api'
 })
 
 const tokenStore = { token: null }

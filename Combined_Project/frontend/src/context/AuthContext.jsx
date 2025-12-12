@@ -11,7 +11,8 @@ export const AuthProvider = ({ children }) => {
     const load = async () => {
       try {
         const data = await apiMe();
-        setUser(data.user);
+        // Backend /auth/me returns user object directly, not wrapped
+        setUser(data);
       } catch {
         setUser(null);
       } finally {
@@ -45,6 +46,8 @@ export const AuthProvider = ({ children }) => {
     }
     localStorage.removeItem('token');
     setUser(null);
+    // Redirect to login page
+    window.location.href = '/login';
   };
 
   return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>;

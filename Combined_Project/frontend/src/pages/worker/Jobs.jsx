@@ -106,8 +106,8 @@ const WorkerJobs = () => {
                       </div>
                       {/* Timer or Status Pill */}
                       <div className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          job.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            'bg-blue-100 text-blue-800'
+                        job.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          'bg-blue-100 text-blue-800'
                         }`}>
                         {job.status.replace('_', ' ')}
                       </div>
@@ -124,8 +124,7 @@ const WorkerJobs = () => {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-3 flex justify-between items-center">
-                    <p className="text-green-600 font-bold text-lg">${job.total_price}</p>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-3 flex justify-end items-center">
                     <div className="flex gap-2">
                       {statusFilter === 'pending' && (
                         <>

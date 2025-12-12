@@ -1,14 +1,14 @@
 import { query } from '../config/db.js';
 
 export const createBooking = async (req, res) => {
-  const { worker_id, service_id, booking_date, duration_hours, total_price, address, special_instructions, payment_method } =
+  const { worker_id, service_id, booking_date, duration_hours, total_price, address, special_instructions } =
     req.body;
 
   try {
     const result = await query(
       `INSERT INTO bookings (client_id, worker_id, service_id, booking_date, duration_hours,
-        total_price, address, special_instructions, payment_method)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        total_price, address, special_instructions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         req.user.id,
@@ -17,14 +17,14 @@ export const createBooking = async (req, res) => {
         booking_date,
         duration_hours,
         total_price,
-        address,
+        address || 'Not specified',
         special_instructions,
-        payment_method,
       ]
     );
     return res.status(201).json({ booking: result.rows[0] });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to create booking' });
+    console.error('Booking creation error:', err);
+    return res.status(500).json({ message: 'Failed to create booking', error: err.message });
   }
 };
 
@@ -85,20 +85,6 @@ export const listBookings = async (req, res) => {
       location_address: row.address || row.user_address // Use booking address if set, else user address
     }));
     return res.json(mappedRows);
-    // Client frontend: `const data = await response.json(); setBookings(prev => ({ ...prev, [activeTab]: data }));`
-    // If it returns { bookings: [...] } then data is that object.
-    // If Client Frontend expects array directly, I should return array.
-    // Client Front `fetchBookings`: `const data = await response.json();`
-    // Then `CompletedSection` usage: `bookings.map(...)`.
-    // So Client Frontend expects `data` to be an ARRAY.
-    // BUT `Combined` controller originally returned `res.json({ bookings: result.rows })`.
-    // I need to check Client `MyBookings` again.
-    // `bookings[activeTab]` is `data`.
-    // `filteredBookings` = `bookings.filter`.
-    // So data MUST be an array.
-    // The previous controller returned `{ bookings: [...] }`.
-    // The Client Frontend likely expects pure array.
-    // I will change return to `res.json(mappedRows)`.
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Error fetching bookings' });
@@ -120,6 +106,45 @@ export const updateStatus = async (req, res) => {
     return res.json({ booking: result.rows[0] });
   } catch (err) {
     return res.status(500).json({ message: 'Failed to update status' });
+  }
+};
+
+export const getBookingStats = async (req, res) => {
+  try {
+    const isWorker = req.user.role === 'worker';
+    const column = isWorker ? 'worker_id' : 'client_id';
+
+    const result = await query(
+      `SELECT status, COUNT(*) as count 
+       FROM bookings 
+       WHERE ${column} = $1 
+       GROUP BY status`,
+      [req.user.id]
+    );
+
+    const stats = {
+      active: 0,
+      completed: 0,
+      cancelled: 0,
+      total: 0
+    };
+
+    result.rows.forEach(row => {
+      const count = parseInt(row.count);
+      stats.total += count;
+      if (['pending', 'accepted', 'in_progress'].includes(row.status)) {
+        stats.active += count;
+      } else if (row.status === 'completed') {
+        stats.completed += count;
+      } else if (row.status === 'cancelled') {
+        stats.cancelled += count;
+      }
+    });
+
+    return res.json(stats);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Error fetching stats' });
   }
 };
 

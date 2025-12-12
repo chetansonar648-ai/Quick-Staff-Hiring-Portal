@@ -1,13 +1,14 @@
 import axios from "axios";
 
+// Use "/api" base - Vite proxy will forward to backend
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
+  baseURL: "/api",
   withCredentials: true,
 });
 
-// Add token to requests if available
+// Add token to requests if available - check both token names for compatibility
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

@@ -9,7 +9,7 @@ const BookConfirm = () => {
   // Ensure we have data, otherwise redirect
   useEffect(() => {
     if (!worker || !total) {
-      navigate("/browse-staff");
+      navigate("/client/browse-staff");
     }
   }, [worker, total, navigate]);
 
@@ -25,7 +25,7 @@ const BookConfirm = () => {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Booking Confirmed!</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Your service has been successfully booked. You will pay the worker in cash/online at the time of service.</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Your service has been successfully booked. The worker has been notified.</p>
 
           <div className="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-800/50 px-3 py-1.5 rounded-full text-sm mb-8">
             <span className="font-medium text-gray-700 dark:text-gray-300">Booking ID:</span>
@@ -56,22 +56,15 @@ const BookConfirm = () => {
                 <p className="font-semibold text-gray-800 dark:text-gray-200">{serviceLocation}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Amount</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Estimated Value</p>
                 <p className="font-semibold text-gray-800 dark:text-gray-200">${total}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Payment Method</p>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-lg text-green-600 dark:text-green-400">payments</span>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200">Cash / Online Payment</p>
-                </div>
               </div>
             </div>
           </div>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
-              onClick={() => navigate("/bookings")}
+              onClick={() => navigate("/client/bookings")}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors w-full"
             >
               <span className="material-symbols-outlined">list_alt</span>

@@ -1,10 +1,12 @@
-import { query } from '../config/db.js';
+import pool, { query } from '../config/db.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { signToken } from '../utils/token.js';
 
 export const register = async (req, res) => {
-  const client = await query('BEGIN').catch(() => null);
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+
     const {
       name,
       email,
@@ -19,7 +21,7 @@ export const register = async (req, res) => {
     } = req.body;
 
     const passwordHash = await hashPassword(password);
-    const userResult = await query(
+    const userResult = await client.query(
       `INSERT INTO users (name, email, password, role, phone, address)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, name, email, role`,
@@ -28,23 +30,26 @@ export const register = async (req, res) => {
     const user = userResult.rows[0];
 
     if (role === 'worker') {
-      await query(
+      await client.query(
         `INSERT INTO worker_profiles (user_id, bio, skills, hourly_rate, availability)
          VALUES ($1, $2, $3, $4, $5)`,
         [user.id, bio || '', skills, hourly_rate || null, availability || {}]
       );
     }
 
-    await query('COMMIT');
+    await client.query('COMMIT');
     const token = signToken({ id: user.id, role: user.role, email: user.email });
     res.cookie('token', token, { httpOnly: true, sameSite: 'lax' });
     return res.status(201).json({ user, token });
   } catch (err) {
-    await query('ROLLBACK');
+    await client.query('ROLLBACK');
+    console.error('Registration Error:', err);
     const isDuplicate = err?.message?.includes('users_email_key');
     return res.status(isDuplicate ? 409 : 500).json({
       message: isDuplicate ? 'Email already exists' : 'Registration failed',
     });
+  } finally {
+    client.release();
   }
 };
 

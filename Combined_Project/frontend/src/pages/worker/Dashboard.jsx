@@ -14,6 +14,13 @@ const WorkerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // First check if we have a token
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+        if (!token) {
+          setError("No authentication token found. Please log in again.");
+          return;
+        }
+
         const [statsData, userData] = await Promise.all([
           fetchWorkerStats(),
           fetchWorkerMe(),
@@ -28,7 +35,9 @@ const WorkerDashboard = () => {
         setHistory(historyJobs);
       } catch (err) {
         console.error("Failed to load dashboard data", err);
-        setError("Failed to load dashboard data. Please make sure you are logged in and the server is running.");
+        // Show the actual error message from the server
+        const errorMsg = err.message || "Unknown error";
+        setError(`Failed to load dashboard data: ${errorMsg}`);
       }
     };
     loadData();
@@ -126,13 +135,13 @@ const WorkerDashboard = () => {
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-                  <p className="text-[#111618] dark:text-gray-300 text-base font-medium leading-normal">Total Earnings</p>
+                  <p className="text-[#111618] dark:text-gray-300 text-base font-medium leading-normal">Total Reviews</p>
                   <p className="text-[#111618] dark:text-white tracking-light text-3xl font-bold leading-tight">
-                    ${Number(stats.total_earnings || 0).toFixed(2)}
+                    {stats.total_reviews || 0}
                   </p>
                   <p className="text-positive text-sm font-medium leading-normal flex items-center gap-1">
-                    <span className="material-symbols-outlined text-base">arrow_upward</span>
-                    <span>5.2% this month</span>
+                    <span className="material-symbols-outlined text-base">thumb_up</span>
+                    <span>Positive feedback</span>
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">

@@ -8,9 +8,7 @@ const tabs = [
   { key: "past", label: "Past Bookings", icon: "history" },
   { key: "completed", label: "Completed Jobs", icon: "task_alt" },
   { key: "cancelled", label: "Cancelled Jobs", icon: "cancel" },
-  { key: "pendingReviews", label: "Pending Reviews", icon: "rate_review" },
-  { key: "upcomingPayments", label: "Upcoming Payments", icon: "schedule" },
-  { key: "paymentHistory", label: "Payment History", icon: "receipt_long" }
+  { key: "pendingReviews", label: "Pending Reviews", icon: "rate_review" }
 ];
 
 const MyBookings = () => {
@@ -72,10 +70,6 @@ const MyBookings = () => {
         return <CompletedSection bookings={bookings.completed} loading={loading} />;
       case "pendingReviews":
         return <PendingReviewsSection bookings={bookings.pendingReviews} loading={loading} onRefresh={fetchBookings} />;
-      case "upcomingPayments":
-        return <UpcomingPaymentsSection />;
-      case "paymentHistory":
-        return <PaymentHistoryMiniSection />;
       case "cancelled":
         return <CancelledJobsSection bookings={bookings.cancelled} loading={loading} />;
       case "past":
@@ -90,7 +84,7 @@ const MyBookings = () => {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Your Bookings</h2>
         <button
           type="button"
-          onClick={() => navigate("/browse-staff")}
+          onClick={() => navigate("/client/browse-staff")}
           className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors gap-2"
         >
           <span className="material-symbols-outlined !text-xl">add</span>
@@ -329,7 +323,7 @@ const UpcomingSection = ({ bookings, loading, onRefresh }) => {
             </p>
             {(!bookings || bookings.length === 0) && (
               <button
-                onClick={() => navigate("/browse-staff")}
+                onClick={() => navigate("/client/browse-staff")}
                 className="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90"
               >
                 Book a Service
@@ -1031,171 +1025,7 @@ const PendingReviewsSection = ({ bookings, loading, onRefresh }) => {
 
 
 
-const UpcomingPaymentsSection = () => {
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const userId = "mock-user-id";
-        const response = await fetch("/api/payments/upcoming", {
-          headers: { "x-user-id": userId }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setPayments(data);
-        }
-      } catch (error) {
-        console.error("Error fetching upcoming payments:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPayments();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-8 text-gray-500">Loading...</div>;
-  }
-
-  if (payments.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming payments.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {payments.map((payment) => (
-        <div
-          key={payment.id}
-          className="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6"
-        >
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{payment.worker_name}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">{payment.service_type}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Due: {new Date(payment.due_date).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-4">
-              <div className="text-right">
-                <p className="text-lg font-bold text-gray-900 dark:text-white">${parseFloat(payment.amount).toFixed(2)}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Payment Due</p>
-              </div>
-              <button
-                onClick={() => navigate(`/payments/history?paymentId=${payment.id}`)}
-                className="px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors text-sm"
-              >
-                Pay Now
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const PaymentHistoryMiniSection = () => {
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const userId = "mock-user-id";
-        const response = await fetch("/api/payments/history?limit=5", {
-          headers: { "x-user-id": userId }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setPayments(data);
-        }
-      } catch (error) {
-        console.error("Error fetching payment history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPayments();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-8 text-gray-500">Loading...</div>;
-  }
-
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-        <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Recent Payments</h3>
-        <button
-          onClick={() => navigate("/payments/history")}
-          className="text-sm text-primary hover:underline"
-        >
-          View All
-        </button>
-      </div>
-      {payments.length === 0 ? (
-        <div className="p-8 text-center text-sm text-gray-500">No payment history.</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-white/5">
-              <tr>
-                <th className="px-4 sm:px-6 py-3 text-left font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Service</th>
-                <th className="px-4 sm:px-6 py-3 text-left font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Date</th>
-                <th className="px-4 sm:px-6 py-3 text-left font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Amount</th>
-                <th className="px-4 sm:px-6 py-3 text-left font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Status</th>
-                <th className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {payments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="text-xs sm:text-sm">
-                      <p className="font-medium text-gray-900 dark:text-white">{payment.service_type}</p>
-                      <p className="text-gray-500 dark:text-gray-400">{payment.worker_name}</p>
-                    </div>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                    {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString() : "N/A"}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                    ${parseFloat(payment.amount).toFixed(2)}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${payment.status === "paid" ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300" :
-                      payment.status === "pending" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300" :
-                        "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
-                      }`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-right">
-                    <button
-                      onClick={() => navigate(`/payments/history?receipt=${payment.id}`)}
-                      className="text-primary hover:underline text-xs sm:text-sm font-medium"
-                    >
-                      View Receipt
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-};
 
 
 
@@ -1350,22 +1180,7 @@ const ViewBookingModal = ({ booking, onClose }) => {
               </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-              <h5 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">payments</span>
-                Payment
-              </h5>
-              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <div className="flex justify-between">
-                  <span>Hourly Rate:</span>
-                  <span className="font-medium">${booking.hourly_rate}/hr</span>
-                </div>
-                <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-2 mt-1">
-                  <span className="font-bold text-gray-900 dark:text-white">Total Amount:</span>
-                  <span className="font-bold text-primary text-lg">${booking.total_amount}</span>
-                </div>
-              </div>
-            </div>
+
 
             <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
               <h5 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">

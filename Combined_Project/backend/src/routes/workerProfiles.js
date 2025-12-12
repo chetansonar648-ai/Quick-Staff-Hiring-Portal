@@ -46,11 +46,10 @@ const validateAvailability = (availability) => {
 router.get('/me', authenticate(['worker']), async (req, res, next) => {
   try {
     const result = await query(
-      `SELECT u.name, u.email, u.phone, u.profile_image,
+      `SELECT u.name, u.email, u.phone, u.profile_image, u.address,
               wp.bio, wp.skills, wp.hourly_rate, wp.availability, 
               wp.rating, wp.total_reviews, wp.completed_jobs,
-              wp.title, wp.years_of_experience, wp.address, wp.service_location,
-              wp.profile_picture
+              wp.title, wp.years_of_experience, wp.service_location
        FROM users u
        LEFT JOIN worker_profiles wp ON wp.user_id = u.id
        WHERE u.id = $1`,
@@ -84,15 +83,16 @@ router.post(
     const { name, phone, bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location } = req.body
 
     try {
-      // Update user name/phone if provided
-      if (name || phone) {
+      // Update user name/phone/address if provided
+      if (name || phone || address) {
         await query(
           `UPDATE users SET 
             name = COALESCE($1, name), 
-            phone = COALESCE($2, phone), 
+            phone = COALESCE($2, phone),
+            address = COALESCE($3, address),
             updated_at = NOW() 
-           WHERE id = $3`,
-          [name || null, phone || null, req.user.id]
+           WHERE id = $4`,
+          [name || null, phone || null, address || null, req.user.id]
         )
       }
 
@@ -108,21 +108,20 @@ router.post(
                availability = COALESCE($4, availability),
                title = COALESCE($5, title),
                years_of_experience = COALESCE($6, years_of_experience),
-               address = COALESCE($7, address),
-               service_location = COALESCE($8, service_location),
+               service_location = COALESCE($7, service_location),
                updated_at = NOW()
-           WHERE user_id = $9
+           WHERE user_id = $8
            RETURNING *`,
-          [bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location, req.user.id]
+          [bio, skills, hourly_rate, availability, title, years_of_experience, service_location, req.user.id]
         )
         return res.json(updated.rows[0])
       }
 
       // Insert new profile
       const inserted = await query(
-        `INSERT INTO worker_profiles (user_id, bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [req.user.id, bio, skills, hourly_rate, availability, title, years_of_experience, address, service_location]
+        `INSERT INTO worker_profiles (user_id, bio, skills, hourly_rate, availability, title, years_of_experience, service_location)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [req.user.id, bio, skills, hourly_rate, availability, title, years_of_experience, service_location]
       )
       res.status(201).json(inserted.rows[0])
     } catch (err) {
@@ -144,22 +143,13 @@ router.post(
 
       const imageUrl = `/uploads/profiles/${req.file.filename}`
 
-      // Update worker_profiles table
-      const existing = await query('SELECT id FROM worker_profiles WHERE user_id=$1', [req.user.id])
+      // Update users table profile_image column
+      await query(
+        'UPDATE users SET profile_image = $1, updated_at = NOW() WHERE id = $2',
+        [imageUrl, req.user.id]
+      )
 
-      if (existing.rows[0]) {
-        await query(
-          'UPDATE worker_profiles SET profile_picture = $1, updated_at = NOW() WHERE user_id = $2',
-          [imageUrl, req.user.id]
-        )
-      } else {
-        await query(
-          'INSERT INTO worker_profiles (user_id, profile_picture) VALUES ($1, $2)',
-          [req.user.id, imageUrl]
-        )
-      }
-
-      res.json({ profile_picture: imageUrl, message: 'Profile picture updated successfully' })
+      res.json({ profile_image: imageUrl, message: 'Profile picture updated successfully' })
     } catch (err) {
       next(err)
     }

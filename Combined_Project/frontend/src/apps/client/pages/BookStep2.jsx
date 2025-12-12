@@ -36,7 +36,7 @@ const BookStep2 = () => {
 
   const handleNext = () => {
     // Pass data to Step 3
-    navigate(`/book/step-3`, {
+    navigate(`/client/book/step-3`, {
       state: {
         worker,
         service,

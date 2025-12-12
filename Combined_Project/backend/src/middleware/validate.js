@@ -10,7 +10,7 @@ export const validate = (schema) => async (req, res, next) => {
     return next();
   } catch (err) {
     const details = err?.details?.map((d) => d.message) || [err.message];
-    return res.status(400).json({ message: 'Validation failed', errors: details });
+    return res.status(400).json({ message: details[0], errors: details });
   }
 };
 

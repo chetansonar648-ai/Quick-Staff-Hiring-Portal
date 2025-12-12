@@ -59,20 +59,10 @@ const Header = () => {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
         </div>
         <div className="flex items-center gap-6">
-          <button
-            type="button"
-            onClick={() => navigate("/profile?tab=notifications")}
-            className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary transition-all"
-          >
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white dark:border-gray-900" />
-            </span>
-          </button>
+
           <div
             className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate("/client/profile")}
           >
             <img
               alt="Client Avatar"

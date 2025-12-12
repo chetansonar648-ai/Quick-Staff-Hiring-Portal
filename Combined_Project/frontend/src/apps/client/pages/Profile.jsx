@@ -14,14 +14,6 @@ const Profile = () => {
     profile_image_url: ""
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [notifications, setNotifications] = useState({
-    email_notifications: true,
-    sms_notifications: false,
-    push_notifications: true,
-    booking_updates: true,
-    payment_reminders: true,
-    review_reminders: true
-  });
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     new_password: "",
@@ -33,7 +25,7 @@ const Profile = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchProfile(), fetchNotifications()]);
+      await fetchProfile();
       setLoading(false);
     };
     loadData();
@@ -54,20 +46,7 @@ const Profile = () => {
     }
   };
 
-  const fetchNotifications = async () => {
-    try {
-      const userId = "mock-user-id";
-      const response = await fetch("/api/profile/notifications", {
-        headers: { "x-user-id": userId }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.settings) setNotifications(data.settings);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
+
 
   const handleUpdateProfile = async () => {
     setLoading(true);
@@ -120,21 +99,7 @@ const Profile = () => {
     }
   };
 
-  const handleUpdateNotifications = async () => {
-    try {
-      const userId = "mock-user-id";
-      const response = await fetch("/api/profile/notifications", {
-        method: "PATCH",
-        headers: { "x-user-id": userId, "Content-Type": "application/json" },
-        body: JSON.stringify(notifications)
-      });
-      if (response.ok) {
-        alert("Notification settings updated!");
-      }
-    } catch (error) {
-      console.error("Error updating notifications:", error);
-    }
-  };
+
 
   return (
     <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10">
@@ -207,16 +172,7 @@ const Profile = () => {
                     >
                       Security
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("notifications")}
-                      className={`shrink-0 border-b-2 px-1 py-4 text-xs sm:text-sm font-medium transition-colors ${activeTab === "notifications"
-                        ? "border-primary text-primary"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-primary/50 hover:text-gray-700 dark:hover:text-gray-300"
-                        }`}
-                    >
-                      Notifications
-                    </button>
+
                   </nav>
                 </div>
                 <div className="p-4 sm:p-6">
@@ -238,13 +194,7 @@ const Profile = () => {
                       loading={loading}
                     />
                   )}
-                  {activeTab === "notifications" && (
-                    <NotificationsSection
-                      notifications={notifications}
-                      setNotifications={setNotifications}
-                      onSave={handleUpdateNotifications}
-                    />
-                  )}
+
                 </div>
               </div>
             </div>

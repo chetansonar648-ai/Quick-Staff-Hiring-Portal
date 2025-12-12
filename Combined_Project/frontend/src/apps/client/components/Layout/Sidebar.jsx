@@ -1,10 +1,13 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../../../context/AuthContext.jsx";
 
 const navLinkBase =
   "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 font-medium";
 
 const Sidebar = () => {
+  const { logout } = useAuth();
+
   return (
     <aside className="w-64 flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
       <div className="flex items-center gap-4 text-gray-900 dark:text-white px-6 h-16 border-b border-gray-200 dark:border-gray-800">
@@ -60,17 +63,7 @@ const Sidebar = () => {
               <span>Saved Workers</span>
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/client/payments/history"
-              className={({ isActive }) =>
-                `${navLinkBase} ${isActive ? "bg-primary/10 text-primary font-semibold" : ""}`
-              }
-            >
-              <span className="material-symbols-outlined">payment</span>
-              <span>Payments</span>
-            </NavLink>
-          </li>
+
           <li>
             <NavLink
               to="/client/profile"
@@ -87,6 +80,7 @@ const Sidebar = () => {
       <div className="p-4 border-t border-gray-200 dark:border-gray-800">
         <button
           type="button"
+          onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 font-medium"
         >
           <span className="material-symbols-outlined">logout</span>

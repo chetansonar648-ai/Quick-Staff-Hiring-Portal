@@ -14,6 +14,8 @@ import bookingRoutes from './routes/bookings.js';
 import savedWorkerRoutes from './routes/savedWorkers.js';
 import savedClientRoutes from './routes/savedClients.js';
 import workerRoutes from './routes/workers.js';
+import reviewRoutes from './routes/reviews.js';
+import paymentRoutes from './routes/payments.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
 import { ensureAuxTables } from './config/db.js';
@@ -42,7 +44,8 @@ app.use('/api/worker-profiles', workerProfileRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/worker-services', workerServiceRoutes);
 app.use('/api/bookings', bookingRoutes);
-// app.use('/api/reviews', reviewRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/saved-workers', savedWorkerRoutes);
 app.use('/api/saved-clients', savedClientRoutes);
 app.use('/api/workers', workerRoutes);

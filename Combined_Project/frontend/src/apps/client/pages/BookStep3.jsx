@@ -9,7 +9,7 @@ const BookStep3 = () => {
   // Ensure we have data, otherwise redirect
   React.useEffect(() => {
     if (!worker || !date || !time) {
-      navigate("/browse-staff");
+      navigate("/client/browse-staff");
     }
   }, [worker, date, time, navigate]);
 
@@ -26,53 +26,52 @@ const BookStep3 = () => {
   const bookingLocation = serviceLocation;
   const bookingInstructions = instructions || "None provided";
 
-  const hourlyRate = worker?.hourly_rate || service?.price || 25;
+  const hourlyRate = worker?.hourly_rate || 25;
   const bookingDuration = parseInt(duration || 4);
   const subtotal = hourlyRate * bookingDuration;
-  const serviceFee = 10.00;
-  const taxes = subtotal * 0.0825;
-  const total = subtotal + serviceFee + taxes;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      const userId = "mock-user-id";
-      const bookingDate = new Date(date).toISOString().split('T')[0];
+      // Combine date and time for ISO timestamp
+      const bookingDateTime = new Date(`${date}T${time}`);
+
+      // Get token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
 
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": userId
+          ...(token && { "Authorization": `Bearer ${token}` })
         },
         body: JSON.stringify({
           worker_id: worker.id,
-          service_type: service?.name || worker.role,
-          service_description: bookingInstructions,
-          booking_date: bookingDate,
-          start_time: time,
+          service_id: 1, // Default service
+          booking_date: bookingDateTime.toISOString(),
           duration_hours: bookingDuration,
-          location_address: bookingLocation,
-          hourly_rate: hourlyRate
+          total_price: subtotal,
+          address: bookingLocation,
+          special_instructions: bookingInstructions !== "None provided" ? bookingInstructions : null
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        navigate("/book/confirm", {
+        navigate("/client/book/confirm", {
           state: {
             worker,
             serviceLocation: bookingLocation,
-            total: total.toFixed(2),
+            total: subtotal.toFixed(2),
             formattedDate,
-            bookingReference: data.booking_reference
+            bookingReference: data.booking?.id || data.booking_reference
           }
         });
       } else {
         const err = await response.json();
-        alert(`Booking failed: ${err.error || "Unknown error"}`);
+        alert(`Booking failed: ${err.message || err.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Booking Error:", error);
@@ -96,7 +95,7 @@ const BookStep3 = () => {
                       <span className="material-symbols-outlined">check</span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-600 dark:text-gray-300">Service & Time</h3>
+                      <h3 className="font-semibold text-gray-600 dark:text-gray-300">Date & Time</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
                     </div>
                   </div>
@@ -118,7 +117,7 @@ const BookStep3 = () => {
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center size-8 rounded-full bg-primary text-white font-bold">3</div>
                     <div>
-                      <h3 className="font-bold text-primary">Confirm & Pay</h3>
+                      <h3 className="font-bold text-primary">Confirm Booking</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Review and finalize</p>
                     </div>
                   </div>
@@ -146,6 +145,10 @@ const BookStep3 = () => {
                       <h4 className="font-bold text-gray-900 dark:text-white">{workerName}</h4>
                       <p className="text-primary font-medium">{workerRole}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{bookingDuration} Hours of Service</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">Rate</p>
+                      <p className="text-xl font-bold text-primary">${hourlyRate}/hr</p>
                     </div>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
@@ -177,47 +180,16 @@ const BookStep3 = () => {
 
               <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
-              {/* Payment Details */}
+              {/* Cost Summary - Simplified */}
               <div>
-                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Payment Details</h3>
-                <div className="space-y-4">
-                  <div className="p-4 rounded-lg border-2 border-primary bg-primary/5">
-                    <label className="flex items-center gap-4 cursor-pointer">
-                      <input defaultChecked className="form-radio text-primary focus:ring-primary" name="payment-method" type="radio" />
-                      <div className="flex items-center gap-3 flex-grow">
-                        <span className="material-symbols-outlined text-2xl">payments</span>
-                        <div>
-                          <p className="font-semibold text-gray-800 dark:text-gray-200">Cash / Online Payment</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Pay securely or on-site</p>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 dark:border-gray-700"></div>
-
-              {/* Cost Breakdown */}
-              <div>
-                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Cost Breakdown</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <p className="text-gray-600 dark:text-gray-300">Service ({bookingDuration} hrs @ ${hourlyRate}/hr)</p>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">${subtotal.toFixed(2)}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="text-gray-600 dark:text-gray-300">Service Fee</p>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">${serviceFee.toFixed(2)}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="text-gray-600 dark:text-gray-300">Taxes & Fees</p>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">${taxes.toFixed(2)}</p>
-                  </div>
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                  <div className="flex justify-between font-bold text-lg">
-                    <p className="text-gray-900 dark:text-white">Estimated Total</p>
-                    <p className="text-primary">${total.toFixed(2)}</p>
+                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Estimated Cost</h3>
+                <div className="p-4 rounded-lg bg-primary/5 dark:bg-primary/10 border border-primary/20">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-300">Service ({bookingDuration} hrs @ ${hourlyRate}/hr)</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Payment will be arranged with the worker</p>
+                    </div>
+                    <p className="text-2xl font-bold text-primary">${subtotal.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -266,4 +238,3 @@ const BookStep3 = () => {
 };
 
 export default BookStep3;
-

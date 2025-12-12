@@ -5,7 +5,6 @@ import Header from "./components/Layout/Header";
 import BrowseStaff from "./pages/BrowseStaff";
 import Dashboard from "./pages/Dashboard";
 import MyBookings from "./pages/MyBookings";
-import PaymentsHistory from "./pages/PaymentsHistory";
 import SavedWorkers from "./pages/SavedWorkers";
 import StaffProfile from "./pages/StaffProfile";
 
@@ -37,7 +36,7 @@ const App = () => {
             <Route path="browse-staff" element={<BrowseStaff />} />
             <Route path="bookings" element={<MyBookings />} />
             <Route path="saved-workers" element={<SavedWorkers />} />
-            <Route path="payments/history" element={<PaymentsHistory />} />
+            <Route path="saved-workers" element={<SavedWorkers />} />
             <Route path="profile" element={<Profile />} />
             <Route path="staff/:id" element={<StaffProfile />} />
 

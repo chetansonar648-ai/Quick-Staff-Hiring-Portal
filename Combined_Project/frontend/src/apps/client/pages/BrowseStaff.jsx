@@ -69,7 +69,7 @@ const BrowseStaff = () => {
   };
 
   const handleViewProfile = (workerId) => {
-    navigate(`/staff/${workerId}`);
+    navigate(`/client/staff/${workerId}`);
   };
 
   const handleSaveWorker = async (workerId) => {
@@ -221,7 +221,7 @@ const BrowseStaff = () => {
           </h2>
           <button
             type="button"
-            onClick={() => navigate("/browse-staff")}
+            onClick={() => navigate("/client/browse-staff")}
             className="text-sm font-medium text-primary hover:underline"
           >
             View All
@@ -249,7 +249,7 @@ const BrowseStaff = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {staff.map((member) => (
-            <StaffCard key={member.id} member={member} onViewProfile={handleViewProfile} onBookNow={() => navigate(`/book/step-1?workerId=${member.id}`)} />
+            <StaffCard key={member.id} member={member} onViewProfile={handleViewProfile} onBookNow={() => navigate(`/client/book/step-1?workerId=${member.id}`)} />
           ))}
         </div>
       </section>
@@ -262,7 +262,7 @@ const BrowseStaff = () => {
             setSelectedWorker(null);
           }}
           onBookNow={() => {
-            navigate(`/book/step-1?workerId=${selectedWorker.id}`);
+            navigate(`/client/book/step-1?workerId=${selectedWorker.id}`);
             setShowProfileModal(false);
           }}
 

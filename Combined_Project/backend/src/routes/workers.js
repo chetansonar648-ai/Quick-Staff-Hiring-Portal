@@ -15,15 +15,36 @@ import {
 
 const router = Router();
 
+// Categories endpoint - must be before /:id to avoid conflict
+router.get("/categories/list", async (req, res, next) => {
+  try {
+    // Get unique skills/categories from workers with count
+    const result = await query(`
+      SELECT DISTINCT unnest(wp.skills) as category, COUNT(*) as count
+      FROM worker_profiles wp
+      JOIN users u ON u.id = wp.user_id
+      WHERE u.is_active = TRUE AND u.role = 'worker'
+      GROUP BY category
+      ORDER BY count DESC, category ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/", listWorkers);
+
+// Specific routes MUST come before /:id to avoid matching issues
 router.get("/stats", authenticate(["worker"]), getWorkerStats);
 router.get("/jobs", authenticate(["worker"]), getWorkerJobs);
 router.patch("/jobs/:id/status", authenticate(["worker"]), updateJobStatus);
 router.get("/saved-clients", authenticate(["worker"]), getSavedClients);
-
-router.get("/:id", getWorkerProfile);
 router.get("/me/profile", authenticate(), getWorkerProfile);
 router.put("/me/profile", authenticate(["worker"]), validateWorkerProfile, updateWorkerProfile);
+
+// /:id route must be LAST since it's a catch-all
+router.get("/:id", getWorkerProfile);
 
 // Profile picture upload
 router.post(
@@ -38,22 +59,13 @@ router.post(
 
       const imageUrl = `/uploads/profiles/${req.file.filename}`;
 
-      // Update worker_profiles table
-      const existing = await query("SELECT id FROM worker_profiles WHERE user_id=$1", [req.user.id]);
+      // Update users table profile_image column
+      await query(
+        "UPDATE users SET profile_image = $1, updated_at = NOW() WHERE id = $2",
+        [imageUrl, req.user.id]
+      );
 
-      if (existing.rows[0]) {
-        await query(
-          "UPDATE worker_profiles SET profile_picture = $1, updated_at = NOW() WHERE user_id = $2",
-          [imageUrl, req.user.id]
-        );
-      } else {
-        await query(
-          "INSERT INTO worker_profiles (user_id, profile_picture) VALUES ($1, $2)",
-          [req.user.id, imageUrl]
-        );
-      }
-
-      res.json({ profile_picture: imageUrl, message: "Profile picture updated successfully" });
+      res.json({ profile_image: imageUrl, message: "Profile picture updated successfully" });
     } catch (err) {
       next(err);
     }

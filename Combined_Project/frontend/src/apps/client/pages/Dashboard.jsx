@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../../api/client";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     active: 0,
     completed: 0,
-    pendingReviews: 0,
-    upcomingPayments: 0
+    pendingReviews: 0
   });
+
   const [recommendedStaff, setRecommendedStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,47 +21,28 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Mock user ID - in production, get from auth context
-      // In production, get from auth context
-      const userId = localStorage.getItem("userId") || "mock-user-id";
-
       // Fetch booking stats
-      const statsRes = await fetch("/api/bookings/stats/summary", {
-        headers: { "x-user-id": userId }
-      });
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
+      const statsRes = await api.get("/bookings/stats/summary");
+      if (statsRes.data) {
         setStats({
-          active: statsData.active || 0,
-          completed: statsData.completed || 0,
-          pendingReviews: 0, // Will fetch from reviews endpoint
-          upcomingPayments: 0 // Will fetch from payments endpoint
+          active: statsRes.data.active || 0,
+          completed: statsRes.data.completed || 0,
+          pendingReviews: 0
         });
       }
 
       // Fetch pending reviews count
-      const reviewsRes = await fetch("/api/reviews/pending", {
-        headers: { "x-user-id": userId }
-      });
-      if (reviewsRes.ok) {
-        const reviewsData = await reviewsRes.json();
-        setStats(prev => ({ ...prev, pendingReviews: reviewsData.length || 0 }));
-      }
-
-      // Fetch upcoming payments count
-      const paymentsRes = await fetch("/api/payments/upcoming", {
-        headers: { "x-user-id": userId }
-      });
-      if (paymentsRes.ok) {
-        const paymentsData = await paymentsRes.json();
-        setStats(prev => ({ ...prev, upcomingPayments: paymentsData.length || 0 }));
+      try {
+        const reviewsRes = await api.get("/reviews/pending");
+        setStats(prev => ({ ...prev, pendingReviews: reviewsRes.data?.length || 0 }));
+      } catch (err) {
+        console.log("Reviews endpoint not available yet");
       }
 
       // Fetch recommended staff (top rated)
-      const staffRes = await fetch("/api/workers?sort_by=rating&limit=4");
-      if (staffRes.ok) {
-        const staffData = await staffRes.json();
-        setRecommendedStaff(staffData);
+      const staffRes = await api.get("/workers");
+      if (staffRes.data) {
+        setRecommendedStaff(staffRes.data.slice(0, 4)); // Show first 4 workers
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -71,7 +53,7 @@ const Dashboard = () => {
   };
 
   const handleCategoryClick = (category) => {
-    navigate(`/browse-staff?category=${encodeURIComponent(category)}`);
+    navigate(`/client/browse-staff?category=${encodeURIComponent(category)}`);
   };
 
   const handleSearch = (e) => {
@@ -80,7 +62,7 @@ const Dashboard = () => {
     if (searchQuery.trim()) {
       params.append("search", searchQuery);
     }
-    navigate(`/browse-staff?${params.toString()}`);
+    navigate(`/client/browse-staff?${params.toString()}`);
   };
 
   const handleFiltersClick = () => {
@@ -89,7 +71,7 @@ const Dashboard = () => {
       params.append("search", searchQuery);
     }
     params.append("showFilters", "true");
-    navigate(`/browse-staff?${params.toString()}`);
+    navigate(`/client/browse-staff?${params.toString()}`);
   };
 
   return (
@@ -101,7 +83,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <button
             type="button"
-            onClick={() => navigate("/bookings?tab=active")}
+            onClick={() => navigate("/client/bookings?tab=active")}
             className="text-left bg-white dark:bg-gray-800/50 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 flex items-start gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             <div className="p-2 sm:p-3 rounded-full bg-primary/10 text-primary flex-shrink-0">
@@ -118,7 +100,7 @@ const Dashboard = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/bookings?tab=completed")}
+            onClick={() => navigate("/client/bookings?tab=completed")}
             className="text-left bg-white dark:bg-gray-800/50 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 flex items-start gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             <div className="p-2 sm:p-3 rounded-full bg-green-500/10 text-green-500 flex-shrink-0">
@@ -135,7 +117,7 @@ const Dashboard = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/bookings?tab=pendingReviews")}
+            onClick={() => navigate("/client/bookings?tab=pendingReviews")}
             className="text-left bg-white dark:bg-gray-800/50 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 flex items-start gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             <div className="p-2 sm:p-3 rounded-full bg-yellow-500/10 text-yellow-500 flex-shrink-0">
@@ -150,23 +132,7 @@ const Dashboard = () => {
               </p>
             </div>
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/bookings?tab=upcomingPayments")}
-            className="text-left bg-white dark:bg-gray-800/50 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 flex items-start gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all"
-          >
-            <div className="p-2 sm:p-3 rounded-full bg-red-500/10 text-red-500 flex-shrink-0">
-              <span className="material-symbols-outlined text-lg sm:text-xl">schedule</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                Upcoming Payments
-              </p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {loading ? "..." : stats.upcomingPayments}
-              </p>
-            </div>
-          </button>
+
         </div>
       </section>
 
@@ -229,7 +195,7 @@ const Dashboard = () => {
           <CategoryLink icon="construction" label="Construction" onClick={() => handleCategoryClick("Construction")} />
           <button
             type="button"
-            onClick={() => navigate("/browse-staff")}
+            onClick={() => navigate("/client/browse-staff")}
             className="group flex flex-col items-center justify-center text-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary dark:bg-primary/20 dark:border-primary/30 hover:shadow-lg hover:-translate-y-1 transition-all"
           >
             <span className="material-symbols-outlined text-2xl sm:text-3xl">add</span>
@@ -275,7 +241,7 @@ const RecommendedCard = ({ member }) => {
         </div>
         <button
           type="button"
-          onClick={() => navigate(`/staff/${member.id}`)}
+          onClick={() => navigate(`/client/staff/${member.id}`)}
           className="w-full mt-3 sm:mt-4 flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 sm:h-9 px-3 sm:px-4 bg-primary/10 text-primary text-xs sm:text-sm font-bold hover:bg-primary/20 transition-colors whitespace-nowrap"
         >
           <span>View Profile</span>

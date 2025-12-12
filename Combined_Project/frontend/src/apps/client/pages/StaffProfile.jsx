@@ -49,7 +49,7 @@ const StaffProfile = () => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Profile Not Found</h2>
           <p className="text-gray-500">{error || "We couldn't find the staff profile you're looking for."}</p>
           <button
-            onClick={() => navigate("/browse-staff")}
+            onClick={() => navigate("/client/browse-staff")}
             className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors"
           >
             Browse Staff
@@ -100,7 +100,7 @@ const StaffProfile = () => {
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => navigate(`/book/step-1?workerId=${worker.id}`)}
+                    onClick={() => navigate(`/client/book/step-1?workerId=${worker.id}`)}
                     className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <span className="material-symbols-outlined">calendar_add_on</span>

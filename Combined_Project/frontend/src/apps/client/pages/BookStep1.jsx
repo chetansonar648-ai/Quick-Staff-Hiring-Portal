@@ -8,8 +8,7 @@ const BookStep1 = () => {
   const [worker, setWorker] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Form state
-  const [selectedService, setSelectedService] = useState(null);
+  // Form state - removed service selection
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
 
@@ -27,16 +26,6 @@ const BookStep1 = () => {
         })
         .then((data) => {
           setWorker(data);
-          // Auto-select first service if available
-          if (data && (!selectedService)) {
-            // Mock services creation if not strictly in data
-            const s = [
-              { id: '1', title: "Standard Service", desc: `General ${data.role || "service"}`, price: data.hourly_rate || 20 },
-              { id: '2', title: "Premium Service", desc: "Includes additional coordination", price: (data.hourly_rate || 20) + 15 },
-              { id: '3', title: "Package Deal", desc: "4-hour event service", price: (data.hourly_rate || 20) * 3.5 }
-            ];
-            setSelectedService(s[0]);
-          }
         })
         .catch((err) => console.error(err))
         .finally(() => setLoading(false));
@@ -54,26 +43,20 @@ const BookStep1 = () => {
     </main>
   );
 
-  const services = worker ? [
-    { id: '1', title: "Standard Service", desc: `General ${worker.role || "service"}`, price: worker.hourly_rate || 20 },
-    { id: '2', title: "Premium Service", desc: "Includes additional coordination", price: (worker.hourly_rate || 20) + 10 },
-    { id: '3', title: "Package Deal", desc: "4-hour event service", price: ((worker.hourly_rate || 20) * 4) * 0.9 }
-  ] : [];
-
   const handleNext = () => {
-    if (!selectedService || !selectedDate || !selectedTimeSlot) {
-      alert("Please select a service, date, and time.");
+    if (!selectedDate || !selectedTimeSlot) {
+      alert("Please select a date and time.");
       return;
     }
 
-    // Pass data to Step 2
+    // Pass data to Step 2 - no service selection needed
     const params = new URLSearchParams();
     params.append("workerId", workerId);
 
-    navigate(`/book/step-2?${params.toString()}`, {
+    navigate(`/client/book/step-2?${params.toString()}`, {
       state: {
         worker,
-        service: selectedService,
+        service: null, // No service selection
         date: selectedDate,
         time: selectedTimeSlot
       }
@@ -90,7 +73,7 @@ const BookStep1 = () => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Worker Not Found</h2>
           <p className="text-gray-500">The professional you are looking for could not be found or no worker was selected.</p>
           <button
-            onClick={() => navigate("/browse-staff")}
+            onClick={() => navigate("/client/browse-staff")}
             className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors"
           >
             Browse Staff
@@ -111,10 +94,14 @@ const BookStep1 = () => {
             src={worker.image_url || "https://via.placeholder.com/150"}
             onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
           />
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-gray-500 dark:text-gray-400">You are booking:</p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{worker.name}</h2>
             <p className="text-primary font-medium">{worker.role}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Hourly Rate</p>
+            <p className="text-2xl font-bold text-primary">${worker.hourly_rate || 25}/hr</p>
           </div>
         </div>
 
@@ -127,8 +114,8 @@ const BookStep1 = () => {
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center size-8 rounded-full bg-primary text-white font-bold">1</div>
                     <div>
-                      <h3 className="font-bold text-primary">Service & Time</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Select service and date</p>
+                      <h3 className="font-bold text-primary">Date & Time</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Select when you need service</p>
                     </div>
                   </div>
                 </li>
@@ -156,40 +143,11 @@ const BookStep1 = () => {
             </nav>
           </div>
 
-          {/* Main Content */}
+          {/* Main Content - Only Date & Time selection */}
           <div className="md:col-span-3 space-y-8">
-            {/* 1. Select Service */}
+            {/* Select Date & Time */}
             <div className="bg-white dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
-              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">1. Select Service</h3>
-              <div className="space-y-3">
-                {services.map((s) => (
-                  <label
-                    key={s.id}
-                    className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all ${selectedService?.id === s.id
-                      ? "border-primary bg-primary/5 dark:bg-primary/10"
-                      : "border-gray-200 dark:border-gray-700 hover:border-primary"
-                      }`}
-                  >
-                    <input
-                      checked={selectedService?.id === s.id}
-                      onChange={() => setSelectedService(s)}
-                      className="form-radio text-primary focus:ring-primary"
-                      name="service"
-                      type="radio"
-                    />
-                    <div className="ml-4 flex-grow">
-                      <p className="font-semibold text-gray-800 dark:text-gray-100">{s.title}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{s.desc}</p>
-                    </div>
-                    <p className="font-bold text-lg text-primary">${Math.round(s.price)}{s.title.includes("Package") ? "" : "/hr"}</p>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Select Date & Time */}
-            <div className="bg-white dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
-              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">2. Select Date & Time</h3>
+              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Select Date & Time</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Calendar */}
                 <div>
@@ -207,18 +165,21 @@ const BookStep1 = () => {
                     {Array.from({ length: 35 }).map((_, i) => {
                       const day = i - startDay + 1;
                       const isDate = day > 0 && day <= daysInMonth;
-                      // Simple mock visual logic
                       const dateStr = isDate ? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : "";
                       const isSelected = selectedDate === dateStr;
+                      const isPast = isDate && new Date(dateStr) < new Date(new Date().setHours(0, 0, 0, 0));
 
                       return (
                         <div key={i} className="h-8">
                           {isDate && (
                             <button
-                              onClick={() => setSelectedDate(dateStr)}
-                              className={`size-8 rounded-full flex items-center justify-center transition-colors ${isSelected
-                                ? "bg-primary text-white font-bold"
-                                : "hover:bg-primary/20"
+                              onClick={() => !isPast && setSelectedDate(dateStr)}
+                              disabled={isPast}
+                              className={`size-8 rounded-full flex items-center justify-center transition-colors ${isPast
+                                  ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                                  : isSelected
+                                    ? "bg-primary text-white font-bold"
+                                    : "hover:bg-primary/20"
                                 }`}
                             >
                               {day}
@@ -234,7 +195,7 @@ const BookStep1 = () => {
                 <div>
                   <p className="font-semibold mb-4 text-center">Available Timeslots</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {["09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"].map((t) => (
+                    {["09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"].map((t) => (
                       <button
                         key={t}
                         onClick={() => setSelectedTimeSlot(t)}
@@ -246,9 +207,6 @@ const BookStep1 = () => {
                         {t}
                       </button>
                     ))}
-                    <button disabled className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-center text-gray-400 dark:text-gray-500 cursor-not-allowed">
-                      05:00 PM
-                    </button>
                   </div>
                 </div>
               </div>
@@ -271,4 +229,3 @@ const BookStep1 = () => {
 };
 
 export default BookStep1;
-
