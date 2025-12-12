@@ -54,7 +54,7 @@ export const listWorkerServices = async (req, res, next) => {
     const result = await query(
       `SELECT ws.*, s.name, s.category, s.description
        FROM worker_services ws
-       JOIN services s ON s.services_id = ws.service_id
+       JOIN services s ON s.id = ws.service_id
        WHERE ws.worker_id = $1 AND ws.is_active = TRUE`,
       [workerId]
     );

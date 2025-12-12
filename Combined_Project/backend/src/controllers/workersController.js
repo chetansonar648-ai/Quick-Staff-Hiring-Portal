@@ -49,10 +49,10 @@ export const validateWorkerProfile = [
   body("phone").optional().isString().withMessage("Phone must be a string"),
   body("bio").optional().isString().withMessage("Bio must be a string"),
   body("skills").optional().isArray().withMessage("Skills must be an array"),
-  body("hourly_rate").optional().isDecimal().withMessage("Hourly rate must be a decimal number"),
+  body("hourly_rate").optional({ nullable: true, checkFalsy: true }).isDecimal().withMessage("Hourly rate must be a decimal number"),
   body("availability").optional().custom(validateAvailability),
   body("title").optional().isString().withMessage("Title must be a string"),
-  body("years_of_experience").optional().isInt({ min: 0 }).withMessage("Years of experience must be a non-negative integer"),
+  body("years_of_experience").optional({ nullable: true, checkFalsy: true }).isInt({ min: 0 }).withMessage("Years of experience must be a non-negative integer"),
   body("address").optional().isString().withMessage("Address must be a string"),
   body("service_location").optional().isString().withMessage("Service location must be a string"),
 ];
@@ -186,7 +186,7 @@ export const getWorkerJobs = async (req, res, next) => {
              s.name as service_name, 
              u.name as client_name, u.profile_image as client_image
       FROM bookings b
-      JOIN services s ON b.service_id = s.services_id
+      JOIN services s ON b.service_id = s.id
       JOIN users u ON b.client_id = u.id
       WHERE b.worker_id = $1 ${statusClause}
       ORDER BY b.booking_date DESC

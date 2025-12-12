@@ -14,10 +14,22 @@ const WorkerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Check if token exists
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError("No authentication token found. Please log in first.");
+          return;
+        }
+
+        console.log("[DEBUG] Loading worker dashboard data...");
+
         const [statsData, userData] = await Promise.all([
           fetchWorkerStats(),
           fetchWorkerMe(),
         ]);
+
+        console.log("[DEBUG] Stats:", statsData);
+        console.log("[DEBUG] User:", userData);
 
         const activeJobs = await fetchWorkerJobs('active');
         const historyJobs = await fetchWorkerJobs('history');
@@ -28,7 +40,7 @@ const WorkerDashboard = () => {
         setHistory(historyJobs);
       } catch (err) {
         console.error("Failed to load dashboard data", err);
-        setError("Failed to load dashboard data. Please make sure you are logged in and the server is running.");
+        setError(`Failed to load dashboard data: ${err.message || 'Unknown error'}. Please make sure you are logged in and the server is running.`);
       }
     };
     loadData();
