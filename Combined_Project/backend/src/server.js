@@ -14,6 +14,7 @@ import bookingRoutes from './routes/bookings.js';
 import savedWorkerRoutes from './routes/savedWorkers.js';
 import savedClientRoutes from './routes/savedClients.js';
 import workerRoutes from './routes/workers.js';
+import adminApiRoutes from './routes/adminApi.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
 import { ensureAuxTables } from './config/db.js';
@@ -35,6 +36,9 @@ app.use(morgan('dev'));
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
+// Admin Panel API routes (without /api prefix for admin frontend compatibility)
+app.use('/', adminApiRoutes);
 
 // API routes
 app.use('/api/auth', authRoutes);

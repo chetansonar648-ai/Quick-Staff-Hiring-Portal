@@ -19,6 +19,7 @@ export default function HomePage() {
                 <Link to="/categories" className="text-sm font-medium leading-normal hover:text-[#005A9C] dark:hover:text-[#005A9C]">Staff Categories</Link>
                 <Link to="/how-it-works" className="text-sm font-medium leading-normal hover:text-[#005A9C] dark:hover:text-[#005A9C]">How It Works</Link>
                 <Link to="/about" className="text-sm font-medium leading-normal hover:text-[#005A9C] dark:hover:text-[#005A9C]">About Us</Link>
+                <Link to="/admin" className="text-sm font-medium leading-normal text-[#005A9C] hover:text-[#005A9C]/80">Admin Panel</Link>
               </div>
               <div className="flex gap-2">
                 <Link to="/register" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#005A9C] text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-[#005A9C]/90 transition-colors">

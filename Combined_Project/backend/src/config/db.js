@@ -70,13 +70,24 @@ dotenv.config();
 
 const { Pool } = pkg;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
-});
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? { rejectUnauthorized: false }
+          : false,
+    }
+    : {
+      user: 'postgres',
+      host: 'localhost',
+      database: 'quickstaff',
+      password: 'riddhi15',
+      port: 5432,
+      ssl: false,
+    }
+);
 
 // ✅ Safe query helper
 export const query = (text, params) => pool.query(text, params);

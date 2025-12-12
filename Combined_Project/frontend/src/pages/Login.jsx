@@ -19,7 +19,9 @@ const Login = () => {
     try {
       const data = await login(form);
       // Redirect based on role
-      if (data.user.role === 'client') {
+      if (data.user.role === 'admin') {
+        navigate("/admin");
+      } else if (data.user.role === 'client') {
         navigate("/client");
       } else if (data.user.role === 'worker') {
         navigate("/worker/dashboard");
