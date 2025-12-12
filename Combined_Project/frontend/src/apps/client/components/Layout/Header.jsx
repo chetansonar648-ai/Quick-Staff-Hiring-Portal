@@ -1,0 +1,98 @@
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+const pageTitleMap = {
+  "/": "Dashboard",
+  "/browse-staff": "Browse Staff",
+  "/bookings": "My Bookings",
+  "/bookings/upcoming": "Upcoming Bookings",
+  "/bookings/active": "Active Bookings",
+  "/bookings/completed": "Completed Jobs",
+  "/bookings/cancelled": "Cancelled Jobs",
+  "/bookings/reviews": "Pending Reviews",
+  "/saved-workers": "Saved Workers",
+  "/payments/history": "Payment History",
+  "/payments/receipt": "Receipt",
+  "/profile": "My Profile"
+};
+
+const Header = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const title = pageTitleMap[location.pathname] || "Client Dashboard";
+
+  const [user, setUser] = React.useState({
+    name: "Maria G.",
+    role: "Restaurant Owner",
+    // image: "ALL_IMAGES/AT header Client avatar.png"
+    image: "https://lh3.googleusercontent.com/aida-public/AB6A…2BKHH4SnCxWRIA2dlfHJI0huLEuE0stfK6Q4MUA7t6u650KP4"
+  });
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const userId = localStorage.getItem("userId") || "mock-user-id";
+        const response = await fetch("/api/profile", {
+          headers: { "x-user-id": userId }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            setUser({
+              name: data.user.full_name || "Client",
+              role: data.user.company || "Client",
+              image: data.user.profile_image_url || "ALL_IMAGES/AT header Client avatar.png"
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  return (
+    <header className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-between h-16 px-6">
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
+        </div>
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => navigate("/profile?tab=notifications")}
+            className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary transition-all"
+          >
+            <span className="material-symbols-outlined">notifications</span>
+            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white dark:border-gray-900" />
+            </span>
+          </button>
+          <div
+            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+            onClick={() => navigate("/profile")}
+          >
+            <img
+              alt="Client Avatar"
+              className="size-9 rounded-full object-cover border border-gray-200 dark:border-gray-700 bg-gray-100"
+              src={user.image.startsWith("http") || user.image.startsWith("/") ? user.image : `/${user.image}`}
+              onError={(e) => {
+                e.target.src = "https://via.placeholder.com/150?text=User";
+              }}
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+
+

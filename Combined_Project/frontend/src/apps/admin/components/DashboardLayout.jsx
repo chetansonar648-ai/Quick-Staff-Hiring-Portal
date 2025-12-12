@@ -1,0 +1,68 @@
+import { useState } from 'react'
+import { Link, useLocation, Outlet } from 'react-router-dom'
+import './DashboardLayout.css'
+
+const DashboardLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const location = useLocation()
+
+  const menuItems = [
+    { path: '/', label: 'Dashboard', icon: '📊' },
+    { path: '/workers', label: 'Workers', icon: '🧑‍🔧' },
+    { path: '/clients', label: 'Clients', icon: '👥' },
+    { path: '/bookings', label: 'Bookings', icon: '📅' },
+    { path: '/ratings-reviews', label: 'Ratings & Reviews', icon: '⭐' },
+    { path: '/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' },
+  ]
+
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+    return location.pathname.startsWith(path)
+  }
+
+  return (
+    <div className={`dashboard-container ${sidebarOpen ? '' : 'sidebar-closed'}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+        <div className="sidebar-header">
+          <h2>Admin Panel</h2>
+          <button 
+            className="toggle-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? '◀' : '▶'}
+          </button>
+        </div>
+        <nav className="sidebar-nav">
+          {(menuItems || []).map((item) => (
+            <Link
+              key={item.path}
+              to={item.path || '/'}
+              className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+            >
+              <span className="nav-icon">{item.icon || '📄'}</span>
+              {sidebarOpen && <span className="nav-label">{item.label || 'Menu'}</span>}
+            </Link>
+          ))}
+        </nav>
+      </aside>
+
+      <main className="main-content">
+        <header className="top-header">
+          <h1>Admin Dashboard</h1>
+          <div className="header-actions">
+            <span className="user-info">👤 Admin User</span>
+          </div>
+        </header>
+        <div className="content-area">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default DashboardLayout
+
