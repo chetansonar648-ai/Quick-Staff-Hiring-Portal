@@ -10,7 +10,7 @@ router.get('/', authenticate(['worker']), async (req, res, next) => {
     const result = await query(
       `SELECT ws.*, s.name, s.category
        FROM worker_services ws
-       JOIN services s ON ws.service_id = s.services_id
+       JOIN services s ON ws.service_id = s.id
        WHERE ws.worker_id=$1`,
       [req.user.id]
     )

@@ -21,9 +21,10 @@ router.get("/jobs", authenticate(["worker"]), getWorkerJobs);
 router.patch("/jobs/:id/status", authenticate(["worker"]), updateJobStatus);
 router.get("/saved-clients", authenticate(["worker"]), getSavedClients);
 
-router.get("/:id", getWorkerProfile);
+// IMPORTANT: /me/* routes must come BEFORE /:id to avoid "me" being matched as an id
 router.get("/me/profile", authenticate(), getWorkerProfile);
 router.put("/me/profile", authenticate(["worker"]), validateWorkerProfile, updateWorkerProfile);
+router.get("/:id", getWorkerProfile);
 
 // Profile picture upload
 router.post(

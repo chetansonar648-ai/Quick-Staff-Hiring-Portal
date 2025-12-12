@@ -44,7 +44,7 @@ export const listBookings = async (req, res) => {
       u.address as user_address,
       wp.title as worker_role
     FROM bookings b
-    LEFT JOIN services s ON b.service_id = s.services_id
+    LEFT JOIN services s ON b.service_id = s.id
     LEFT JOIN users u ON ${otherRoleColumn} = u.id
     LEFT JOIN worker_profiles wp ON b.worker_id = wp.user_id
     WHERE ${roleColumn} = $1

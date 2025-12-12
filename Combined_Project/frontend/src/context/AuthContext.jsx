@@ -10,8 +10,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const load = async () => {
       try {
+        // /auth/me returns the user object directly, not { user: ... }
         const data = await apiMe();
-        setUser(data.user);
+        setUser(data);
       } catch {
         setUser(null);
       } finally {

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS worker_profiles (
 );
 
 CREATE TABLE IF NOT EXISTS services (
-    services_id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100) NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS services (
 CREATE TABLE IF NOT EXISTS worker_services (
     id SERIAL PRIMARY KEY,
     worker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    services_id INTEGER REFERENCES services(services_id) ON DELETE CASCADE,
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE,
     price DECIMAL(10, 2) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     id SERIAL PRIMARY KEY,
     client_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     worker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    service_id INTEGER REFERENCES services(services_id) ON DELETE CASCADE, -- Fixed reference to services_id
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE, -- Fixed reference to services_id
     booking_date TIMESTAMP NOT NULL,
     duration_hours INTEGER,
     total_price DECIMAL(10, 2) NOT NULL,
