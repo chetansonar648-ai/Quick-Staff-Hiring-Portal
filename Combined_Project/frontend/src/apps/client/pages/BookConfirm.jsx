@@ -55,10 +55,7 @@ const BookConfirm = () => {
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Location</p>
                 <p className="font-semibold text-gray-800 dark:text-gray-200">{serviceLocation}</p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Estimated Value</p>
-                <p className="font-semibold text-gray-800 dark:text-gray-200">${total}</p>
-              </div>
+
             </div>
           </div>
 

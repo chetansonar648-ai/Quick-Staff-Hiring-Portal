@@ -3,15 +3,11 @@ import React, { useState, useEffect } from "react";
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [profile, setProfile] = useState({
-    full_name: "",
+    name: "",
     email: "",
     phone: "",
-    company: "",
-    location_address: "",
-    city: "",
-    state: "",
-    zip_code: "",
-    profile_image_url: ""
+    address: "",
+    profile_image: ""
   });
   const [isEditing, setIsEditing] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -20,7 +16,6 @@ const Profile = () => {
     confirm_password: ""
   });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -33,33 +28,38 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const userId = "mock-user-id";
-      const response = await fetch("/api/profile", {
-        headers: { "x-user-id": userId }
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+      const response = await fetch("/api/auth/me", {
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.user) setProfile(data.user);
+        // Backend returns user object directly or { user: ... }
+        setProfile(data.user || data);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
   };
 
-
-
   const handleUpdateProfile = async () => {
     setLoading(true);
     try {
-      const userId = "mock-user-id";
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
       const response = await fetch("/api/profile", {
         method: "PATCH",
-        headers: { "x-user-id": userId, "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(profile)
       });
       if (response.ok) {
         setIsEditing(false);
         alert("Profile updated successfully!");
+      } else {
+        const err = await response.json();
+        alert("Failed to update: " + err.message);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -76,10 +76,13 @@ const Profile = () => {
     }
     setLoading(true);
     try {
-      const userId = "mock-user-id";
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
       const response = await fetch("/api/profile/password", {
         method: "PATCH",
-        headers: { "x-user-id": userId, "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           current_password: passwordForm.current_password,
           new_password: passwordForm.new_password
@@ -89,7 +92,8 @@ const Profile = () => {
         setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
         alert("Password changed successfully!");
       } else {
-        alert("Failed to change password. Please check your current password.");
+        const err = await response.json();
+        alert("Failed to change password: " + err.message);
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -98,8 +102,6 @@ const Profile = () => {
       setLoading(false);
     }
   };
-
-
 
   return (
     <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10">
@@ -123,7 +125,7 @@ const Profile = () => {
                 <div className="relative mb-4">
                   <div
                     className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-24 w-24 sm:h-32 sm:w-32"
-                    style={{ backgroundImage: `url("${profile.profile_image_url}")` }}
+                    style={{ backgroundImage: `url("${profile.profile_image || 'https://via.placeholder.com/150'}")` }}
                   />
                   <button
                     type="button"
@@ -132,9 +134,9 @@ const Profile = () => {
                         alert("Please click 'Edit Profile' first.");
                         return;
                       }
-                      const url = prompt("Enter new profile image URL:", profile.profile_image_url);
+                      const url = prompt("Enter new profile image URL:", profile.profile_image);
                       if (url) {
-                        setProfile({ ...profile, profile_image_url: url });
+                        setProfile({ ...profile, profile_image: url });
                       }
                     }}
                     className="absolute bottom-0 right-0 flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-primary rounded-full text-white hover:bg-primary/90 transition-colors cursor-pointer"
@@ -143,9 +145,9 @@ const Profile = () => {
                   </button>
                 </div>
                 <h2 className="text-lg sm:text-xl font-bold leading-tight text-gray-900 dark:text-white">
-                  {profile.full_name}
+                  {profile.name}
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Client since Jan 2023</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Client</p>
               </div>
             </div>
             <div className="lg:col-span-8">
@@ -172,7 +174,6 @@ const Profile = () => {
                     >
                       Security
                     </button>
-
                   </nav>
                 </div>
                 <div className="p-4 sm:p-6">
@@ -194,7 +195,6 @@ const Profile = () => {
                       loading={loading}
                     />
                   )}
-
                 </div>
               </div>
             </div>
@@ -215,8 +215,8 @@ const ProfileDetailsSection = ({ profile, setProfile, isEditing, setIsEditing, o
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <Field
           label="Full Name"
-          value={profile.full_name}
-          onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+          value={profile.name}
+          onChange={(e) => setProfile({ ...profile, name: e.target.value })}
           editable={isEditing}
         />
         <Field
@@ -232,36 +232,13 @@ const ProfileDetailsSection = ({ profile, setProfile, isEditing, setIsEditing, o
           editable={isEditing}
         />
         <Field
-          label="Company"
-          value={profile.company}
-          onChange={(e) => setProfile({ ...profile, company: e.target.value })}
-          editable={isEditing}
-        />
-        <Field
           label="Address"
-          value={profile.location_address}
-          onChange={(e) => setProfile({ ...profile, location_address: e.target.value })}
-          editable={isEditing}
-        />
-        <Field
-          label="City"
-          value={profile.city}
-          onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-          editable={isEditing}
-        />
-        <Field
-          label="State"
-          value={profile.state}
-          onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-          editable={isEditing}
-        />
-        <Field
-          label="Zip Code"
-          value={profile.zip_code}
-          onChange={(e) => setProfile({ ...profile, zip_code: e.target.value })}
+          value={profile.address}
+          onChange={(e) => setProfile({ ...profile, address: e.target.value })}
           editable={isEditing}
         />
       </div>
+
       <div className="flex justify-end mt-6">
         {isEditing ? (
           <div className="flex gap-2">
@@ -390,12 +367,7 @@ const NotificationsSection = ({ notifications, setNotifications, onSave }) => {
           checked={notifications.booking_updates}
           onChange={() => handleToggle("booking_updates")}
         />
-        <NotificationToggle
-          label="Payment Reminders"
-          description="Get reminders for upcoming payments"
-          checked={notifications.payment_reminders}
-          onChange={() => handleToggle("payment_reminders")}
-        />
+        {/* Payment Reminders Removed */}
         <NotificationToggle
           label="Review Reminders"
           description="Get reminders to leave reviews"

@@ -7,8 +7,8 @@ export const createBooking = async (req, res) => {
   try {
     const result = await query(
       `INSERT INTO bookings (client_id, worker_id, service_id, booking_date, duration_hours,
-        total_price, address, special_instructions)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        total_price, address, special_instructions, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
        RETURNING *`,
       [
         req.user.id,
@@ -37,14 +37,15 @@ export const listBookings = async (req, res) => {
   let queryText = `
     SELECT
       b.*,
-      s.name as service_type,
+      b.total_price as total_amount,
+      COALESCE(s.name, 'General Service') as service_type,
       s.image_url as service_image,
       u.name as ${isWorker ? 'client_name' : 'worker_name'},
       u.profile_image as ${isWorker ? 'client_image' : 'worker_image'},
       u.address as user_address,
       wp.title as worker_role
     FROM bookings b
-    LEFT JOIN services s ON b.service_id = s.services_id
+    LEFT JOIN services s ON b.service_id = s.id
     LEFT JOIN users u ON ${otherRoleColumn} = u.id
     LEFT JOIN worker_profiles wp ON b.worker_id = wp.user_id
     WHERE ${roleColumn} = $1
@@ -53,22 +54,12 @@ export const listBookings = async (req, res) => {
   const queryParams = [req.user.id];
 
   if (status) {
-    if (status === 'upcoming') {
-      // "upcoming" usually means accepted/pending in future? Or just filtering by status string 'upcoming' if DB uses that?
-      // Client frontend sends status strings like 'upcoming', 'active'.
-      // DB check constraint allows: 'pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'.
-      // So 'upcoming' might need to map to 'accepted' + date future?
-      // For now, let's assume strict status matching unless specific keywords.
-      // But Client frontend sends "upcoming" which isn't in DB constraint.
-      // Client frontend map: upcoming->upcoming, active->active.
-      // Wait, Client Frontend `MyBookings.jsx` line 35 maps statuses!
-      // upcoming -> "upcoming" (which is NOT in DB).
-      // I need to correct Client Frontend or Handle it here.
-      // If status is 'upcoming', it probably means 'accepted' and date > now.
-      // If status is 'active', probably 'in_progress'.
-      // Let's just pass specific DB statuses where possible or handle groups.
-      queryText += ` AND b.status = $2`;
-      queryParams.push(status);
+    if (status === 'pending' || status === 'requested') {
+      // Catch-all for pending/requested/NULL to ensure visibility
+      queryText += ` AND (b.status = 'pending' OR b.status = 'requested' OR b.status IS NULL)`;
+    } else if (status === 'all_active') {
+      // Broad filter: Pending, Accepted, In Progress (for Upcoming Tab)
+      queryText += ` AND b.status IN ('pending', 'accepted', 'in_progress')`;
     } else {
       queryText += ` AND b.status = $2`;
       queryParams.push(status);

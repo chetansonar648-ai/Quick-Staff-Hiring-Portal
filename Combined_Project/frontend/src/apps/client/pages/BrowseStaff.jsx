@@ -75,9 +75,13 @@ const BrowseStaff = () => {
   const handleSaveWorker = async (workerId) => {
     try {
       const userId = "mock-user-id"; // In production, get from auth context
-      const response = await fetch(`/api/saved-workers/${workerId}`, {
+      const response = await fetch(`/api/saved-workers`, {
         method: "POST",
-        headers: { "x-user-id": userId }
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId
+        },
+        body: JSON.stringify({ worker_id: workerId })
       });
       if (response.ok) {
         alert("Worker saved successfully!");

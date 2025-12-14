@@ -29,25 +29,31 @@ const MyBookings = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const userId = "mock-user-id"; // In production, get from auth context
+      // Get token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+
       const statusMap = {
-        upcoming: "upcoming",
-        active: "active",
-        requested: "requested",
-        past: "past",
+        upcoming: "all_active",
+        active: "in_progress",
+        requested: "pending",
+        past: "completed",
         completed: "completed",
         cancelled: "cancelled",
-        pendingReviews: "completed" // Fetch completed for pending reviews
+        pendingReviews: "completed"
       };
 
       const status = statusMap[activeTab];
       if (status) {
-        const response = await fetch(`/api/bookings?status=${status}`, {
-          headers: { "x-user-id": userId }
+        const response = await fetch(`/api/bookings/client?status=${status}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          }
         });
         if (response.ok) {
           const data = await response.json();
-          setBookings(prev => ({ ...prev, [activeTab]: data }));
+          // Adjust for potential backend response format { bookings: [] }
+          setBookings(prev => ({ ...prev, [activeTab]: data.bookings || data }));
         }
       }
     } catch (error) {
@@ -65,7 +71,7 @@ const MyBookings = () => {
       case "active":
         return <ActiveSection bookings={bookings.active} loading={loading} />;
       case "requested":
-        return <RequestedSection />;
+        return <RequestedSection bookings={bookings.requested} loading={loading} onRefresh={fetchBookings} />;
       case "completed":
         return <CompletedSection bookings={bookings.completed} loading={loading} />;
       case "pendingReviews":
@@ -148,10 +154,13 @@ const UpcomingSection = ({ bookings, loading, onRefresh }) => {
   const handleCancelBooking = async (bookingId) => {
     if (confirm("Are you sure you want to cancel this booking?")) {
       try {
-        const userId = "mock-user-id";
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
         const response = await fetch(`/api/bookings/${bookingId}/status`, {
           method: "PATCH",
-          headers: { "x-user-id": userId, "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          },
           body: JSON.stringify({ status: "cancelled", cancelled_by: "client", cancellation_reason: "User requested cancellation" })
         });
         if (response.ok) {
@@ -247,8 +256,20 @@ const UpcomingSection = ({ bookings, loading, onRefresh }) => {
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading upcoming bookings...</div>;
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return "text-orange-500 bg-orange-500/10";
+      case 'accepted': return "text-green-500 bg-green-500/10";
+      case 'in_progress': return "text-blue-500 bg-blue-500/10";
+      case 'completed': return "text-gray-500 bg-gray-500/10";
+      case 'cancelled': return "text-red-500 bg-red-500/10";
+      default: return "text-gray-500 bg-gray-500/10";
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
+      {/* Calendar Section (Unchanged) */}
       <div className="w-full lg:w-[400px] flex-shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-6 rounded-xl h-fit">
         {/* Dynamic Calendar UI */}
         <div className="flex items-center justify-between mb-4">
@@ -355,9 +376,9 @@ const UpcomingSection = ({ bookings, loading, onRefresh }) => {
                         <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{booking.worker_name}</h3>
                         <p className="font-medium text-primary">{booking.service_type} - {booking.worker_role}</p>
                       </div>
-                      <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full mt-2 sm:mt-0 text-blue-500 bg-blue-500/10`}>
+                      <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full mt-2 sm:mt-0 ${getStatusColor(booking.status)}`}>
                         <span className="material-symbols-outlined !text-base">event</span>
-                        <span>{booking.status === 'upcoming' ? 'Confirmed' : booking.status}</span>
+                        <span className="capitalize">{booking.status}</span>
                       </div>
                     </div>
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -442,10 +463,13 @@ const ActiveSection = ({ bookings, loading, onRefresh }) => {
   const handleCancelBooking = async (bookingId) => {
     if (confirm("Are you sure you want to cancel this booking?")) {
       try {
-        const userId = "mock-user-id";
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
         const response = await fetch(`/api/bookings/${bookingId}/status`, {
           method: "PATCH",
-          headers: { "x-user-id": userId, "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          },
           body: JSON.stringify({ status: "cancelled", cancelled_by: "client", cancellation_reason: "User requested cancellation" })
         });
         if (response.ok) {
@@ -454,6 +478,18 @@ const ActiveSection = ({ bookings, loading, onRefresh }) => {
       } catch (error) {
         console.error("Error cancelling booking:", error);
       }
+    }
+  };
+
+  // Helper for dynamic status colors (copied for consistency)
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return "text-orange-500 bg-orange-500/10";
+      case 'accepted': return "text-green-500 bg-green-500/10";
+      case 'in_progress': return "text-blue-500 bg-blue-500/10";
+      case 'completed': return "text-gray-500 bg-gray-500/10";
+      case 'cancelled': return "text-red-500 bg-red-500/10";
+      default: return "text-gray-500 bg-gray-500/10";
     }
   };
 
@@ -494,7 +530,7 @@ const ActiveSection = ({ bookings, loading, onRefresh }) => {
                   </div>
                   <div className="flex items-center gap-3 font-medium">
                     <span className="material-symbols-outlined !text-xl text-yellow-500">route</span>
-                    <span className="text-green-600 dark:text-green-400 capitalize">{booking.status}</span>
+                    <span className={`px-2 py-0.5 rounded-md capitalize ${getStatusColor(booking.status)}`}>{booking.status}</span>
                   </div>
                 </div>
               </div>
@@ -548,47 +584,35 @@ const ActiveSection = ({ bookings, loading, onRefresh }) => {
   );
 };
 
-const RequestedSection = () => {
-  const [requestedBookings, setRequestedBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+const RequestedSection = ({ bookings = [], loading, onRefresh }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterService, setFilterService] = useState("All Services");
   const [filterStatus, setFilterStatus] = useState("Any Status");
   const [filterDate, setFilterDate] = useState("");
-  const [viewBooking, setViewBooking] = useState(null); // Add view modal state
-  const navigate = useNavigate();
+  const [viewBooking, setViewBooking] = useState(null);
 
-  useEffect(() => {
-    const fetchRequested = async () => {
-      try {
-        const userId = "mock-user-id";
-        const response = await fetch("/api/bookings?status=requested", {
-          headers: { "x-user-id": userId }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setRequestedBookings(data);
-        }
-      } catch (error) {
-        console.error("Error fetching requested bookings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRequested();
-  }, []);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return "text-orange-500 bg-orange-500/10";
+      case 'reviewing': return "text-blue-500 bg-blue-500/10";
+      default: return "text-gray-500 bg-gray-500/10";
+    }
+  };
 
   const handleWithdraw = async (bookingId) => {
     if (confirm("Are you sure you want to withdraw this booking request?")) {
       try {
-        const userId = "mock-user-id";
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
         const response = await fetch(`/api/bookings/${bookingId}/status`, {
           method: "PATCH",
-          headers: { "x-user-id": userId, "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          },
           body: JSON.stringify({ status: "cancelled", cancelled_by: "client", cancellation_reason: "Withdrawn by client" })
         });
         if (response.ok) {
-          setRequestedBookings(prev => prev.filter(b => b.id !== bookingId));
+          if (onRefresh) onRefresh();
         }
       } catch (error) {
         console.error("Error withdrawing booking:", error);
@@ -597,7 +621,7 @@ const RequestedSection = () => {
   };
 
   const filteredBookings = useMemo(() => {
-    return requestedBookings.filter(b => {
+    return bookings.filter(b => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         b.worker_name?.toLowerCase().includes(searchLower) ||
@@ -610,7 +634,7 @@ const RequestedSection = () => {
 
       let matchesStatus = true;
       if (filterStatus !== "Any Status") {
-        if (filterStatus === "Pending") matchesStatus = b.status === "requested";
+        if (filterStatus === "Pending") matchesStatus = b.status === "pending";
         if (filterStatus === "Worker Reviewing") matchesStatus = b.status === "reviewing";
       }
 
@@ -621,16 +645,16 @@ const RequestedSection = () => {
 
       return matchesSearch && matchesService && matchesStatus && matchesDate;
     });
-  }, [requestedBookings, searchTerm, filterService, filterStatus, filterDate]);
+  }, [bookings, searchTerm, filterService, filterStatus, filterDate]);
 
   // Extract unique services
-  const services = ["All Services", ...new Set(requestedBookings.map(b => b.service_type))];
+  const services = ["All Services", ...new Set(bookings.map(b => b.service_type))];
 
   if (loading) {
     return <div className="text-center py-8 text-gray-500">Loading...</div>;
   }
 
-  if (requestedBookings.length === 0) {
+  if (!bookings || bookings.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">No requested bookings at this time.</p>
@@ -683,9 +707,8 @@ const RequestedSection = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredBookings.map((booking) => {
-            const statusInfo = booking.status === "requested"
-              ? { label: "Pending", icon: "hourglass_top", color: "text-orange-500 bg-orange-500/10" }
-              : { label: "Reviewing", icon: "visibility", color: "text-blue-500 bg-blue-500/10" };
+            // Simplified status logic for layout consistency
+            const statusColor = getStatusColor(booking.status);
 
             return (
               <div key={booking.id} className="bg-white dark:bg-gray-900/50 p-4 sm:p-5 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col space-y-4">
@@ -704,9 +727,9 @@ const RequestedSection = () => {
                       {booking.service_type}
                     </p>
                   </div>
-                  <div className={`flex items-center gap-2 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 rounded-full flex-shrink-0 ${statusInfo.color}`}>
-                    <span className="material-symbols-outlined !text-base">{statusInfo.icon}</span>
-                    <span>{statusInfo.label}</span>
+                  <div className={`flex items-center gap-2 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 rounded-full flex-shrink-0 ${statusColor}`}>
+                    <span className="material-symbols-outlined !text-base">{booking.status === 'reviewing' ? 'visibility' : 'hourglass_top'}</span>
+                    <span className="capitalize">{booking.status}</span>
                   </div>
                 </div>
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -742,10 +765,18 @@ const RequestedSection = () => {
   );
 };
 
-const PastSection = ({ bookings, loading }) => {
+const PastSection = ({ bookings = [], loading }) => {
   const [viewBooking, setViewBooking] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return "text-gray-500 bg-gray-500/10";
+      case 'cancelled': return "text-red-500 bg-red-500/10";
+      default: return "text-gray-500 bg-gray-500/10";
+    }
+  };
 
   const filteredBookings = useMemo(() => {
     if (!bookings) return [];
@@ -775,14 +806,13 @@ const PastSection = ({ bookings, loading }) => {
                 name={booking.worker_name}
                 role={`${booking.service_type} - ${booking.worker_role}`}
                 status={booking.status}
-                statusColor="text-gray-500 bg-gray-500/10"
-                statusIcon="history"
+                statusColor={getStatusColor(booking.status)}
+                statusIcon={booking.status === 'completed' ? 'history' : 'cancel'}
                 date={new Date(booking.booking_date).toLocaleDateString()}
                 time={booking.start_time}
                 location={booking.location_address}
                 image={booking.worker_image || "https://via.placeholder.com/150"}
               />
-              {/* Optional: Add Rate/Book Again buttons directly here if design permits, or keep simple card */}
             </div>
           ))}
         </div>
@@ -834,15 +864,12 @@ const CompletedSection = ({ bookings, loading }) => {
                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">{booking.worker_name}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{booking.service_type} - {booking.service_description}</p>
                     <div className="flex items-center gap-1.5 mt-2">
-                      <span className="material-symbols-outlined text-green-500 !text-base">check_circle</span>
-                      <span className="text-xs font-semibold text-green-500 uppercase tracking-wider">Completed</span>
+                      <span className="material-symbols-outlined !text-base text-gray-500">task_alt</span>
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{booking.status}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex sm:flex-col sm:items-end gap-2 sm:gap-1">
-                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100">${parseFloat(booking.total_amount || 0).toFixed(2)}</div>
-                  <div className="text-sm font-medium text-green-600 dark:text-green-400">Paid</div>
-                </div>
+
               </div>
               <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="w-full sm:w-auto grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -1221,9 +1248,13 @@ const RescheduleModal = ({ booking, onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
       const response = await fetch(`/api/bookings/${booking.id}/reschedule`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-user-id": "mock-user-id" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
         body: JSON.stringify({ booking_date: date, start_time: time }) // Simplified
       });
       if (response.ok) {
@@ -1298,9 +1329,13 @@ const ReviewModal = ({ booking, onClose, onSuccess }) => {
     if (rating === 0) return alert("Please select a rating");
     setLoading(true);
     try {
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
       const response = await fetch(`/api/bookings/${booking.id}/review`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-id": "mock-user-id" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
         body: JSON.stringify({ rating, comment })
       });
       console.log('Review response:', response); // Debugging

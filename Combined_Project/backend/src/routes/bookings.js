@@ -5,7 +5,7 @@ import { createBooking, listBookings, updateStatus, getBookingStats } from '../c
 
 const validateBooking = [
   body('worker_id').isInt(),
-  body('service_id').isInt(),
+  body('service_id').optional({ nullable: true }).isInt(),
   body('booking_date').notEmpty(),
   body('duration_hours').isInt(),
   body('total_price').isNumeric(),
@@ -21,6 +21,6 @@ router.post('/', authenticate(['client']), validateBooking, createBooking);
 router.get('/client', authenticate(['client']), listBookings);
 router.get('/worker', authenticate(['worker']), listBookings);
 
-router.patch('/:bookingId/status', authenticate(['worker']), updateStatus);
+router.patch('/:bookingId/status', authenticate(['worker', 'client']), updateStatus);
 
 export default router;

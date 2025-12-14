@@ -35,8 +35,23 @@ const BookStep3 = () => {
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      // Combine date and time for ISO timestamp
-      const bookingDateTime = new Date(`${date}T${time}`);
+      // Convert 12h time (04:00 PM) to 24h (16:00:00) for strict ISO format
+      let time24 = time;
+      if (time && (time.includes('AM') || time.includes('PM'))) {
+        const [timePart, modifier] = time.split(' ');
+        let [hours, minutes] = timePart.split(':');
+        if (hours === '12') hours = '00';
+        if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+        time24 = `${hours}:${minutes}:00`;
+      } else if (time && time.split(':').length === 2) {
+        time24 = `${time}:00`;
+      }
+
+      const bookingDateTime = new Date(`${date}T${time24}`);
+      if (isNaN(bookingDateTime.getTime())) {
+        throw new Error(`Invalid Date/Time: ${date} ${time} (Parsed: ${date}T${time24})`);
+      }
+
 
       // Get token from localStorage
       const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
@@ -49,7 +64,7 @@ const BookStep3 = () => {
         },
         body: JSON.stringify({
           worker_id: worker.id,
-          service_id: 1, // Default service
+          service_id: null, // No specific service selected, defaults to General Service
           booking_date: bookingDateTime.toISOString(),
           duration_hours: bookingDuration,
           total_price: subtotal,
@@ -70,12 +85,17 @@ const BookStep3 = () => {
           }
         });
       } else {
-        const err = await response.json();
-        alert(`Booking failed: ${err.message || err.error || "Unknown error"}`);
+        const text = await response.text();
+        try {
+          const err = JSON.parse(text);
+          alert(`Booking failed: ${err.message || err.error || "Unknown error"}`);
+        } catch (e) {
+          alert(`Server Error (${response.status}): ${text.substring(0, 200)}`);
+        }
       }
     } catch (error) {
       console.error("Booking Error:", error);
-      alert("An error occurred while creating your booking. Please try again.");
+      alert(`Network/Client Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -180,19 +200,7 @@ const BookStep3 = () => {
 
               <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
-              {/* Cost Summary - Simplified */}
-              <div>
-                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Estimated Cost</h3>
-                <div className="p-4 rounded-lg bg-primary/5 dark:bg-primary/10 border border-primary/20">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-gray-600 dark:text-gray-300">Service ({bookingDuration} hrs @ ${hourlyRate}/hr)</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Payment will be arranged with the worker</p>
-                    </div>
-                    <p className="text-2xl font-bold text-primary">${subtotal.toFixed(2)}</p>
-                  </div>
-                </div>
-              </div>
+
 
               <div className="pt-4">
                 <label className="flex items-center gap-3 cursor-pointer">

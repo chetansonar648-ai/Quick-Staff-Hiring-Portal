@@ -61,14 +61,29 @@ export const getWorkerProfile = async (req, res, next) => {
   const workerId = req.params.id || req.user.id;
   try {
     const result = await query(
-      `SELECT u.id, u.name, u.email, u.role, u.phone, u.profile_image, u.address,
-              wp.bio, wp.skills, wp.hourly_rate, wp.availability, wp.rating, wp.total_reviews, wp.completed_jobs,
-              wp.title, wp.years_of_experience, wp.service_location
+      `SELECT u.id, u.name, u.email, u.phone, u.address,
+              COALESCE(u.profile_image, 'https://via.placeholder.com/300x200?text=Worker') as image_url,
+              COALESCE(wp.title, 'Service Professional') as role,
+              wp.bio as description, wp.bio,
+              wp.skills,
+              COALESCE(wp.hourly_rate, 25) as hourly_rate,
+              wp.availability,
+              COALESCE(wp.rating, 0) as rating,
+              COALESCE(wp.total_reviews, 0) as rating_count,
+              wp.completed_jobs,
+              wp.years_of_experience,
+              wp.service_location, wp.service_location as location,
+              u.role as system_role
        FROM users u
        LEFT JOIN worker_profiles wp ON wp.user_id = u.id
        WHERE u.id=$1`,
       [workerId]
     );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Worker not found" });
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
     next(err);
@@ -174,7 +189,7 @@ export const getWorkerJobs = async (req, res, next) => {
              u.name as client_name, u.profile_image as client_image,
              u.phone as client_phone, u.email as client_email
       FROM bookings b
-      LEFT JOIN services s ON b.service_id = s.services_id
+      LEFT JOIN services s ON b.service_id = s.id
       JOIN users u ON b.client_id = u.id
       WHERE b.worker_id = $1 ${statusClause}
       ORDER BY b.booking_date DESC

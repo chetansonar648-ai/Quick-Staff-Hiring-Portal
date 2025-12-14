@@ -11,7 +11,13 @@ const StaffProfile = () => {
   useEffect(() => {
     const fetchWorkerDetails = async () => {
       try {
-        const response = await fetch(`/api/workers/${id}`);
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+        const response = await fetch(`/api/workers/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          }
+        });
         if (!response.ok) {
           throw new Error("Worker not found");
         }

@@ -14,10 +14,13 @@ const SavedWorkers = () => {
   const fetchSavedWorkers = async () => {
     setLoading(true);
     try {
-      const userId = "mock-user-id"; // In production, get from auth context
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
       const params = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : "";
       const response = await fetch(`/api/saved-workers${params}`, {
-        headers: { "x-user-id": userId }
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        }
       });
       if (response.ok) {
         const data = await response.json();
@@ -33,10 +36,13 @@ const SavedWorkers = () => {
   const handleRemove = async (workerId) => {
     if (confirm("Remove this worker from your saved list?")) {
       try {
-        const userId = "mock-user-id";
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
         const response = await fetch(`/api/saved-workers/${workerId}`, {
           method: "DELETE",
-          headers: { "x-user-id": userId }
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { "Authorization": `Bearer ${token}` })
+          }
         });
         if (response.ok) {
           setWorkers(prev => prev.filter(w => w.id !== workerId));
