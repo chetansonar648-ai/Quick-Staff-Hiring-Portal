@@ -11,6 +11,8 @@ import {
   getWorkerJobs,
   updateJobStatus,
   getSavedClients,
+  undoJobStatus,
+  saveClientFromJob,
 } from "../controllers/workersController.js";
 
 const router = Router();
@@ -39,9 +41,14 @@ router.get("/", listWorkers);
 router.get("/stats", authenticate(["worker"]), getWorkerStats);
 router.get("/jobs", authenticate(["worker"]), getWorkerJobs);
 router.patch("/jobs/:id/status", authenticate(["worker"]), updateJobStatus);
+router.post("/jobs/:id/undo", authenticate(["worker"]), undoJobStatus);
+router.post("/jobs/:jobId/save-client", authenticate(["worker"]), saveClientFromJob);
 router.get("/saved-clients", authenticate(["worker"]), getSavedClients);
+
+// IMPORTANT: /me/* routes must come BEFORE /:id to avoid "me" being matched as an id
 router.get("/me/profile", authenticate(), getWorkerProfile);
 router.put("/me/profile", authenticate(["worker"]), validateWorkerProfile, updateWorkerProfile);
+router.get("/:id", getWorkerProfile);
 
 // /:id route must be LAST since it's a catch-all
 router.get("/:id", getWorkerProfile);

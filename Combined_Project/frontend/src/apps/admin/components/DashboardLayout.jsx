@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, Outlet } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import './DashboardLayout.css'
 
 const DashboardLayout = () => {
@@ -7,18 +7,18 @@ const DashboardLayout = () => {
   const location = useLocation()
 
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/workers', label: 'Workers', icon: '🧑‍🔧' },
-    { path: '/clients', label: 'Clients', icon: '👥' },
-    { path: '/bookings', label: 'Bookings', icon: '📅' },
-    { path: '/ratings-reviews', label: 'Ratings & Reviews', icon: '⭐' },
-    { path: '/analytics', label: 'Analytics', icon: '📈' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' },
+    { path: '/admin', label: 'Dashboard', icon: '📊' },
+    { path: '/admin/workers', label: 'Workers', icon: '🧑‍🔧' },
+    { path: '/admin/clients', label: 'Clients', icon: '👥' },
+    { path: '/admin/bookings', label: 'Bookings', icon: '📅' },
+    { path: '/admin/ratings-reviews', label: 'Ratings & Reviews', icon: '⭐' },
+    { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
   ]
 
   const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === '/'
+    if (path === '/admin') {
+      return location.pathname === '/admin' || location.pathname === '/admin/'
     }
     return location.pathname.startsWith(path)
   }
@@ -28,7 +28,7 @@ const DashboardLayout = () => {
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
           <h2>Admin Panel</h2>
-          <button 
+          <button
             className="toggle-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
@@ -46,6 +46,7 @@ const DashboardLayout = () => {
               {sidebarOpen && <span className="nav-label">{item.label || 'Menu'}</span>}
             </Link>
           ))}
+
         </nav>
       </aside>
 

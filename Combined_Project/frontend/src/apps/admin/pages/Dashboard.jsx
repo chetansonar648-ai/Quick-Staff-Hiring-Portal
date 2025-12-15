@@ -41,9 +41,9 @@ const Dashboard = () => {
       .catch(err => console.error('Error fetching bookings:', err))
   }, [])
 
-  const handleAddUser = () => navigate('/clients')
-  const handleViewReports = () => navigate('/analytics')
-  const handleManageSettings = () => navigate('/settings')
+  const handleAddUser = () => navigate('/admin/clients')
+  const handleViewReports = () => navigate('/admin/analytics')
+  const handleManageSettings = () => navigate('/admin/settings')
   const handleSendNotification = () => alert('Notification sender not wired yet.')
 
   return (

@@ -1,45 +1,49 @@
-import { useState, useContext } from 'react'
-import { ThemeContext } from '../App'
+import { useState } from 'react'
 import './Settings.css'
 
 const Settings = () => {
-  const { darkMode, setDarkMode } = useContext(ThemeContext)
-  const [settings, setSettings] = useState({
-    notifications: true,
-    emailAlerts: true,
-    autoSave: true,
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passForm, setPassForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   })
 
-  // Password Change State
-  const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const [passForm, setPassForm] = useState({ userId: '', newPassword: '' })
+  // Admin Profile Data (hardcoded for now)
+  const [adminProfile] = useState({
+    name: 'Admin User',
+    email: 'admin@example.com',
+    role: 'Administrator',
+    userId: '1',
+    joinedDate: '2024-01-15'
+  })
 
   const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
-  const handleToggle = (key) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }))
-  }
-
   const handleChangePassword = async (e) => {
     e.preventDefault()
-    if (!passForm.userId || !passForm.newPassword) return alert("Please fill all fields")
+
+    if (passForm.newPassword !== passForm.confirmPassword) {
+      alert("New passwords don't match!")
+      return
+    }
+
+    if (!passForm.currentPassword || !passForm.newPassword) {
+      return alert("Please fill all fields")
+    }
 
     try {
-      // This is a simplified flow. Ideally we'd have auth middleware.
-      // We are using a new endpoint PUT /users/:id/password
-      const res = await fetch(`${apiBase}/users/${passForm.userId}/password`, {
+      // Using admin user ID = 1
+      const res = await fetch(`${apiBase}/users/1/password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: passForm.newPassword })
       })
 
       if (res.ok) {
-        alert("Password updated successfully")
+        alert("Password updated successfully!")
         setShowPasswordModal(false)
-        setPassForm({ userId: '', newPassword: '' })
+        setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       } else {
         const err = await res.json()
         alert("Failed: " + err.error)
@@ -54,167 +58,80 @@ const Settings = () => {
     <div className="settings-page">
       <div className="page-header">
         <h2>Settings</h2>
-        <p>Manage your account settings and preferences</p>
+        <p>Manage your admin profile and security settings</p>
       </div>
 
       <div className="settings-grid">
+        {/* Admin Profile Section */}
         <div className="settings-section">
-          <h3>General Settings</h3>
-          <div className="settings-card">
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Site Name</h4>
-                <p>Change your site's display name</p>
+          <h3>👤 Admin Profile</h3>
+          <div className="settings-card profile-card">
+            <div className="profile-avatar">
+              <div className="avatar-circle">
+                {adminProfile.name.charAt(0)}
               </div>
-              <input type="text" defaultValue="Admin Dashboard" className="setting-input" />
             </div>
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Site URL</h4>
-                <p>Your site's base URL</p>
+            <div className="profile-details">
+              <div className="profile-item">
+                <label>Name</label>
+                <p>{adminProfile.name}</p>
               </div>
-              <input type="text" defaultValue="https://example.com" className="setting-input" />
-            </div>
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Timezone</h4>
-                <p>Select your timezone</p>
+              <div className="profile-item">
+                <label>Email</label>
+                <p>{adminProfile.email}</p>
               </div>
-              <select className="setting-input">
-                <option>UTC</option>
-                <option>EST</option>
-                <option>PST</option>
-                <option>GMT</option>
-              </select>
+              <div className="profile-item">
+                <label>Role</label>
+                <p><span className="role-badge">{adminProfile.role}</span></p>
+              </div>
+              <div className="profile-item">
+                <label>User ID</label>
+                <p>#{adminProfile.userId}</p>
+              </div>
+              <div className="profile-item">
+                <label>Member Since</label>
+                <p>{new Date(adminProfile.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Security Section - Change Password Only */}
         <div className="settings-section">
-          <h3>Notifications</h3>
+          <h3>🔒 Security</h3>
           <div className="settings-card">
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Push Notifications</h4>
-                <p>Receive push notifications for important updates</p>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={settings.notifications}
-                  onChange={() => handleToggle('notifications')}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Email Alerts</h4>
-                <p>Get notified via email</p>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={settings.emailAlerts}
-                  onChange={() => handleToggle('emailAlerts')}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Auto Save</h4>
-                <p>Automatically save changes</p>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={settings.autoSave}
-                  onChange={() => handleToggle('autoSave')}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="settings-section">
-          <h3>Appearance</h3>
-          <div className="settings-card">
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Dark Mode</h4>
-                <p>Switch to dark theme</p>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={darkMode}
-                  onChange={() => setDarkMode(!darkMode)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Language</h4>
-                <p>Select your preferred language</p>
-              </div>
-              <select className="setting-input">
-                <option>English</option>
-                <option>Spanish</option>
-                <option>French</option>
-                <option>German</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="settings-section">
-          <h3>Security</h3>
-          <div className="settings-card">
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Two-Factor Authentication</h4>
-                <p>Add an extra layer of security</p>
-              </div>
-              <button className="action-button">Enable 2FA</button>
-            </div>
             <div className="setting-item">
               <div className="setting-info">
                 <h4>Change Password</h4>
-                <p>Update your account password</p>
+                <p>Update your admin account password for better security</p>
               </div>
-              <button className="action-button" onClick={() => setShowPasswordModal(true)}>Change Password</button>
-            </div>
-            <div className="setting-item">
-              <div className="setting-info">
-                <h4>Active Sessions</h4>
-                <p>Manage your active sessions</p>
-              </div>
-              <button className="action-button" onClick={() => alert("Active Sessions: Current Session (Windows Chrome) - Active")}>View Sessions</button>
+              <button
+                className="action-button"
+                onClick={() => setShowPasswordModal(true)}
+              >
+                Change Password
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="settings-actions">
-        <button className="save-button" onClick={() => alert("Settings Saved!")}>Save Changes</button>
-        <button className="cancel-button">Cancel</button>
-      </div>
-
+      {/* Password Change Modal */}
       {showPasswordModal && (
         <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Change Password</h3>
+          <div className="modal-content password-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>🔐 Change Password</h3>
+              <button className="close-btn" onClick={() => setShowPasswordModal(false)}>×</button>
+            </div>
             <form className="modal-form" onSubmit={handleChangePassword}>
               <div className="form-group">
-                <label>User ID</label>
+                <label>Current Password</label>
                 <input
-                  type="number"
-                  placeholder="Enter User ID"
-                  value={passForm.userId}
-                  onChange={e => setPassForm({ ...passForm, userId: e.target.value })}
+                  type="password"
+                  placeholder="Enter current password"
+                  value={passForm.currentPassword}
+                  onChange={e => setPassForm({ ...passForm, currentPassword: e.target.value })}
                   required
                 />
               </div>
@@ -222,15 +139,34 @@ const Settings = () => {
                 <label>New Password</label>
                 <input
                   type="password"
-                  placeholder="New Password"
+                  placeholder="Enter new password"
                   value={passForm.newPassword}
                   onChange={e => setPassForm({ ...passForm, newPassword: e.target.value })}
                   required
+                  minLength="6"
                 />
               </div>
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={passForm.confirmPassword}
+                  onChange={e => setPassForm({ ...passForm, confirmPassword: e.target.value })}
+                  required
+                  minLength="6"
+                />
+              </div>
+              <div className="password-hint">
+                <small>⚠️ Password must be at least 6 characters long</small>
+              </div>
               <div className="modal-actions">
-                <button type="button" className="cancel-btn" onClick={() => setShowPasswordModal(false)}>Cancel</button>
-                <button type="submit" className="submit-btn">Update</button>
+                <button type="button" className="cancel-btn" onClick={() => setShowPasswordModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  Update Password
+                </button>
               </div>
             </form>
           </div>
@@ -241,4 +177,3 @@ const Settings = () => {
 }
 
 export default Settings
-

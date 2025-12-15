@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const load = async () => {
       try {
+        // /auth/me returns the user object directly, not { user: ... }
         const data = await apiMe();
         // Backend /auth/me returns user object directly, not wrapped
         setUser(data);

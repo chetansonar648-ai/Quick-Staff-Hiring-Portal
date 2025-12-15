@@ -33,7 +33,7 @@ export const listBookings = async (req, res, next) => {
     const result = await query(
       `SELECT b.*, s.name AS service_name, u.name AS client_name, w.name AS worker_name
        FROM bookings b
-       JOIN services s ON s.services_id = b.service_id
+       JOIN services s ON s.id = b.service_id
        JOIN users u ON u.id = b.client_id
        JOIN users w ON w.id = b.worker_id
        WHERE b.${filterColumn} = $1

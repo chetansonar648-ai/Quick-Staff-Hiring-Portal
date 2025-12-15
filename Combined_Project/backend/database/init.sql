@@ -49,9 +49,8 @@ CREATE TABLE worker_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Services (Catalog of available service types, managed by Admin)
-CREATE TABLE services (
-    services_id SERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS services (
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100) NOT NULL,
@@ -67,8 +66,8 @@ CREATE TABLE services (
 CREATE TABLE worker_services (
     id SERIAL PRIMARY KEY,
     worker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    services_id INTEGER REFERENCES services(services_id) ON DELETE CASCADE,
-    price DECIMAL(10, 2) NOT NULL,    -- Worker's specific price
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE,
+    price DECIMAL(10, 2) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -78,7 +77,7 @@ CREATE TABLE bookings (
     id SERIAL PRIMARY KEY,
     client_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     worker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    service_id INTEGER REFERENCES services(services_id) ON DELETE SET NULL,
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE, -- Fixed reference to services_id
     booking_date TIMESTAMP NOT NULL,
     duration_hours INTEGER,
     total_price DECIMAL(10, 2) NOT NULL,

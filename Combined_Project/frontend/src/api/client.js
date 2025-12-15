@@ -50,6 +50,8 @@ export const removeSavedWorker = (id) => api.delete(`/saved-workers/${id}`).then
 export const fetchWorkerStats = () => api.get("/workers/stats").then((res) => res.data);
 export const fetchWorkerJobs = (status) => api.get("/workers/jobs", { params: { status } }).then((res) => res.data);
 export const updateWorkerJobStatus = (id, status) => api.patch(`/workers/jobs/${id}/status`, { status }).then((res) => res.data);
+export const undoWorkerJobStatus = (id) => api.post(`/workers/jobs/${id}/undo`).then((res) => res.data);
+export const saveClientFromJob = (jobId) => api.post(`/workers/jobs/${jobId}/save-client`).then((res) => res.data);
 export const fetchSavedClients = () => api.get("/workers/saved-clients").then((res) => res.data);
 export const fetchWorkerMe = () => api.get("/workers/me/profile").then((res) => res.data);
 

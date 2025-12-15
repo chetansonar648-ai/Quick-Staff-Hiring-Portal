@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { fetchWorkerJobs, updateWorkerJobStatus } from '../../api/client';
+import { fetchWorkerJobs, updateWorkerJobStatus, undoWorkerJobStatus, saveClientFromJob } from '../../api/client';
+import { useToast } from '../../context/ToastContext';
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -11,6 +12,7 @@ const WorkerJobs = () => {
   const statusFilter = query.get('status') || 'pending'; // Default to requests
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   // Map filters to UI titles and empty states
   const titles = {
@@ -38,13 +40,58 @@ const WorkerJobs = () => {
     loadJobs();
   }, [statusFilter]);
 
+  // Action labels for notifications
+  const actionLabels = {
+    'accepted': 'Job accepted',
+    'rejected': 'Job rejected',
+    'cancelled': 'Job cancelled',
+    'in_progress': 'Job started',
+    'completed': 'Job completed'
+  };
+
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      await updateWorkerJobStatus(id, newStatus);
+      const result = await updateWorkerJobStatus(id, newStatus);
+
+      // Show notification with undo option for accept/reject/cancel
+      const canUndo = ['accepted', 'rejected', 'cancelled'].includes(newStatus);
+
+      showToast(
+        actionLabels[newStatus] || `Status updated to ${newStatus}`,
+        'success',
+        canUndo ? {
+          undoAction: async () => {
+            try {
+              await undoWorkerJobStatus(id);
+              showToast('Action undone successfully', 'info');
+              loadJobs();
+            } catch (err) {
+              showToast(err.message || 'Failed to undo', 'error');
+            }
+          },
+          undoDuration: 60
+        } : {}
+      );
+
       loadJobs(); // Refresh list
     } catch (err) {
       console.error(err);
-      alert("Failed to update status");
+      showToast(err.message || 'Failed to update status', 'error');
+    }
+  };
+
+  // Save client from a completed job
+  const handleSaveClient = async (jobId) => {
+    try {
+      const result = await saveClientFromJob(jobId);
+      if (result.alreadySaved) {
+        showToast('Client already saved', 'info');
+      } else {
+        showToast('Client saved successfully', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Failed to save client', 'error');
     }
   };
 
@@ -133,13 +180,25 @@ const WorkerJobs = () => {
                         </>
                       )}
                       {statusFilter === 'accepted' && (
-                        <button onClick={() => handleStatusUpdate(job.id, 'in_progress')} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700">Start Job</button>
+                        <>
+                          <button onClick={() => handleStatusUpdate(job.id, 'cancelled')} className="px-4 py-2 bg-red-100 text-red-700 rounded-lg font-bold text-sm hover:bg-red-200">Cancel Job</button>
+                          <button onClick={() => handleStatusUpdate(job.id, 'in_progress')} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700">Start Job</button>
+                        </>
                       )}
                       {statusFilter === 'in_progress' && (
                         <button onClick={() => handleStatusUpdate(job.id, 'completed')} className="px-4 py-2 bg-green-600 text-white rounded-lg font-bold text-sm hover:bg-green-700">Complete</button>
                       )}
-                      {(statusFilter === 'completed' || statusFilter === 'rejected') && (
+                      {statusFilter === 'completed' && (
+                        <button onClick={() => handleSaveClient(job.id)} className="px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">bookmark_add</span>
+                          Save Client
+                        </button>
+                      )}
+                      {statusFilter === 'rejected' && (
                         <span className="text-sm text-gray-500 font-medium">Archived</span>
+                      )}
+                      {statusFilter === 'cancelled' && (
+                        <span className="text-sm text-gray-500 font-medium">Cancelled</span>
                       )}
                     </div>
                   </div>

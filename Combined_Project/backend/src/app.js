@@ -14,6 +14,8 @@ import bookingRoutes from './routes/bookings.routes.js';
 import workerRoutes from './routes/workers.js'; // Using workers.js as it contains my implementation
 import reviewRoutes from './routes/reviews.js'; // reviews.routes.js does not exist
 import savedWorkerRoutes from './routes/savedWorkers.js'; // saved.routes.js does not exist
+import requestRoutes from './routes/requests.js';
+import adminApiRoutes from './routes/adminApi.js';
 
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
@@ -40,7 +42,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// Mount Routes
+// Mount Routes (with /api prefix for client/worker apps)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
@@ -48,6 +50,10 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/saved-workers', savedWorkerRoutes);
+app.use('/api/requests', requestRoutes);
+
+// Admin Panel API routes (without /api prefix for admin frontend compatibility)
+app.use('/', adminApiRoutes);
 
 // Error Handling
 // Check if notFound middleware exists, if not use inline

@@ -14,17 +14,22 @@ const WorkerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // First check if we have a token
-        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+        // Check if token exists
+        const token = localStorage.getItem('token');
         if (!token) {
-          setError("No authentication token found. Please log in again.");
+          setError("No authentication token found. Please log in first.");
           return;
         }
+
+        console.log("[DEBUG] Loading worker dashboard data...");
 
         const [statsData, userData] = await Promise.all([
           fetchWorkerStats(),
           fetchWorkerMe(),
         ]);
+
+        console.log("[DEBUG] Stats:", statsData);
+        console.log("[DEBUG] User:", userData);
 
         const activeJobs = await fetchWorkerJobs('active');
         const historyJobs = await fetchWorkerJobs('history');
@@ -35,9 +40,7 @@ const WorkerDashboard = () => {
         setHistory(historyJobs);
       } catch (err) {
         console.error("Failed to load dashboard data", err);
-        // Show the actual error message from the server
-        const errorMsg = err.message || "Unknown error";
-        setError(`Failed to load dashboard data: ${errorMsg}`);
+        setError(`Failed to load dashboard data: ${err.message || 'Unknown error'}. Please make sure you are logged in and the server is running.`);
       }
     };
     loadData();
@@ -202,7 +205,7 @@ const WorkerDashboard = () => {
                         </div>
                         <div className="shrink-0">
                           <Link
-                            to={`/worker/client/${job.client_id}`}
+                            to={`/worker/jobs?status=${job.status}`}
                             className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-gray-100 dark:bg-gray-700 text-[#111618] dark:text-gray-200 text-sm font-medium leading-normal w-fit hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-150"
                           >
                             <span className="truncate">View Details</span>

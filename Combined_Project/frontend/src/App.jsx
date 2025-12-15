@@ -165,7 +165,7 @@ import WorkerDashboard from "./pages/worker/Dashboard.jsx";
 import WorkerJobs from "./pages/worker/Jobs.jsx";
 import WorkerProfile from "./pages/worker/Profile.jsx";
 import SavedClients from "./pages/worker/SavedClients.jsx";
-import ClientProfile from "./pages/worker/ClientProfile.jsx";
+import ClientProfileView from "./pages/worker/ClientProfileView.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 
@@ -205,7 +205,7 @@ const App = () => {
           <Route path="/worker/jobs" element={<WorkerJobs />} />
           <Route path="/worker/profile" element={<WorkerProfile />} />
           <Route path="/worker/saved-clients" element={<SavedClients />} />
-          <Route path="/worker/client/:id" element={<ClientProfile />} />
+          <Route path="/worker/client/:clientId" element={<ClientProfileView />} />
         </Route>
 
         {/* fallback */}

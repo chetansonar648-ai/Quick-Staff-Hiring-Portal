@@ -19,6 +19,7 @@ import profileRoutes from './routes/profile.js';
 import usersRoutes from './routes/users.js';
 // import paymentRoutes from './routes/payments.js'; // Removed
 // app.use('/api/payments', paymentRoutes); // Removed
+import adminApiRoutes from './routes/adminApi.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
 import { ensureAuxTables } from './config/db.js';
@@ -40,6 +41,9 @@ app.use(morgan('dev'));
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
+// Admin Panel API routes (without /api prefix for admin frontend compatibility)
+app.use('/', adminApiRoutes);
 
 // API routes
 app.use('/api/auth', authRoutes);

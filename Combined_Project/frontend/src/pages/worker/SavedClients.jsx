@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchSavedClients } from '../../api/client';
+import { useToast } from '../../context/ToastContext';
 
 const SavedClients = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchSavedClients()
@@ -77,13 +81,18 @@ const SavedClients = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-center">
-                    <Link
-                      to={`/worker/client/${client.id}`}
+                    <button
+                      onClick={() => navigate(`/worker/client/${client.client_id}`)}
                       className="px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     >
                       View Profile
-                    </Link>
-                    <button className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">Contact</button>
+                    </button>
+                    <button
+                      onClick={() => setSelectedClient(client)}
+                      className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                    >
+                      Contact
+                    </button>
                   </div>
                 </li>
               ))}
@@ -91,6 +100,71 @@ const SavedClients = () => {
           )}
         </div>
       </main>
+
+      {/* Contact Details Modal */}
+      {selectedClient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedClient(null)}>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Contact Details</h3>
+              <button
+                onClick={() => setSelectedClient(null)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <img
+                src={selectedClient.profile_image || 'https://via.placeholder.com/60'}
+                alt={selectedClient.name}
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white">{selectedClient.name}</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Client</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="material-symbols-outlined text-gray-500">mail</span>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Email</p>
+                  <p className="text-gray-900 dark:text-white">{selectedClient.email || 'Not available'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="material-symbols-outlined text-gray-500">phone</span>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Phone</p>
+                  <p className="text-gray-900 dark:text-white">{selectedClient.phone || 'Not available'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="material-symbols-outlined text-gray-500">location_on</span>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Address</p>
+                  <p className="text-gray-900 dark:text-white">{selectedClient.address || 'Not available'}</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedClient(null)}
+              className="w-full mt-6 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
