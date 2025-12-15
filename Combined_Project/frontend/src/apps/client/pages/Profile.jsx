@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import defaultClientAvatar from "../../../assets/client_default_avatar.png";
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -125,7 +126,7 @@ const Profile = () => {
                 <div className="relative mb-4">
                   <div
                     className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-24 w-24 sm:h-32 sm:w-32"
-                    style={{ backgroundImage: `url("${profile.profile_image || 'https://via.placeholder.com/150'}")` }}
+                    style={{ backgroundImage: `url("${profile.profile_image || defaultClientAvatar}")` }}
                   />
                   <button
                     type="button"

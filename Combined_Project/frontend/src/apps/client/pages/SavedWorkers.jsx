@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const SavedWorkers = () => {
   const navigate = useNavigate();
@@ -99,9 +100,9 @@ const SavedWorkers = () => {
                   <img
                     alt={w.name}
                     className="w-full h-40 sm:h-48 object-cover"
-                    src={w.image_url}
+                    src={w.image_url || defaultWorkerAvatar}
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/300x200?text=No+Image";
+                      e.target.src = defaultWorkerAvatar;
                     }}
                   />
                   <button

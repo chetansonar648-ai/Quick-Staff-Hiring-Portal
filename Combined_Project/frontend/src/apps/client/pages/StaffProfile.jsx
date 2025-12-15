@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import defaultClientAvatar from "../../../assets/client_default_avatar.png";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const StaffProfile = () => {
   console.log('StaffProfile component mounted!');
@@ -92,9 +94,9 @@ const StaffProfile = () => {
               <img
                 alt={worker.name}
                 className="size-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg flex-shrink-0"
-                src={worker.image_url}
+                src={worker.image_url || defaultWorkerAvatar}
                 onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/150?text=No+Image";
+                  e.target.src = defaultWorkerAvatar;
                 }}
               />
               <div className="flex-grow space-y-3">
@@ -190,7 +192,7 @@ const StaffProfile = () => {
                 worker.reviews.map((r, index) => (
                   <div key={index}>
                     <div className="flex items-start gap-4">
-                      <img alt={r.client_name || "Client"} className="size-10 rounded-full object-cover" src={r.client_image || "https://via.placeholder.com/40?text=U"} />
+                      <img alt={r.client_name || "Client"} className="size-10 rounded-full object-cover" src={r.client_image || defaultClientAvatar} />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <div>

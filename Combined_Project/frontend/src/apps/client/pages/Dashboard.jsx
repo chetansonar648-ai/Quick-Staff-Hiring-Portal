@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../api/client";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -214,10 +215,10 @@ const RecommendedCard = ({ member }) => {
     <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all">
       <img
         alt={member.name}
-        src={member.image_url}
+        src={member.image_url || defaultWorkerAvatar}
         className="w-full h-32 sm:h-40 object-cover"
         onError={(e) => {
-          e.target.src = "https://via.placeholder.com/300x200?text=No+Image";
+          e.target.src = defaultWorkerAvatar;
         }}
       />
       <div className="p-3 sm:p-4">

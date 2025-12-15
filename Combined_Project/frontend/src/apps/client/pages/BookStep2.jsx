@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const BookStep2 = () => {
   const navigate = useNavigate();
@@ -70,8 +71,8 @@ const BookStep2 = () => {
           <img
             alt={worker.name}
             className="size-16 rounded-full object-cover border-2 border-white dark:border-gray-800"
-            src={worker.image_url || "https://via.placeholder.com/150"}
-            onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+            src={worker.image_url || defaultWorkerAvatar}
+            onError={(e) => { e.target.src = defaultWorkerAvatar; }}
           />
           <div className="flex-grow">
             <p className="text-sm text-gray-500 dark:text-gray-400">You are booking:</p>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const tabs = [
   { key: "upcoming", label: "Upcoming Bookings", icon: "event_upcoming" },
@@ -367,8 +368,8 @@ const UpcomingSection = ({ bookings, loading, onRefresh }) => {
                   <img
                     alt={booking.worker_name}
                     className="size-16 rounded-full object-cover"
-                    src={booking.worker_image || "https://via.placeholder.com/150"}
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                    src={booking.worker_image || defaultWorkerAvatar}
+                    onError={(e) => { e.target.src = defaultWorkerAvatar; }}
                   />
                   <div className="flex-grow">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -716,8 +717,8 @@ const RequestedSection = ({ bookings = [], loading, onRefresh }) => {
                   <img
                     alt="Worker Profile"
                     className="w-12 sm:w-16 h-12 sm:h-16 rounded-full object-cover"
-                    src={booking.worker_image || "https://via.placeholder.com/64"}
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/64"; }}
+                    src={booking.worker_image || defaultWorkerAvatar}
+                    onError={(e) => { e.target.src = defaultWorkerAvatar; }}
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white truncate">
@@ -811,7 +812,7 @@ const PastSection = ({ bookings = [], loading }) => {
                 date={new Date(booking.booking_date).toLocaleDateString()}
                 time={booking.start_time}
                 location={booking.location_address}
-                image={booking.worker_image || "https://via.placeholder.com/150"}
+                image={booking.worker_image || defaultWorkerAvatar}
               />
             </div>
           ))}

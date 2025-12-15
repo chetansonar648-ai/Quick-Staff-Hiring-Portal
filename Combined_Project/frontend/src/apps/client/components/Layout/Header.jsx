@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import defaultClientAvatar from "../../../../assets/client_default_avatar.png";
 
 const pageTitleMap = {
   "/": "Dashboard",
@@ -24,8 +25,7 @@ const Header = () => {
   const [user, setUser] = React.useState({
     name: "Maria G.",
     role: "Restaurant Owner",
-    // image: "ALL_IMAGES/AT header Client avatar.png"
-    image: "https://lh3.googleusercontent.com/aida-public/AB6A…2BKHH4SnCxWRIA2dlfHJI0huLEuE0stfK6Q4MUA7t6u650KP4"
+    image: defaultClientAvatar
   });
 
   React.useEffect(() => {
@@ -41,7 +41,7 @@ const Header = () => {
             setUser({
               name: data.user.full_name || "Client",
               role: data.user.company || "Client",
-              image: data.user.profile_image_url || "ALL_IMAGES/AT header Client avatar.png"
+              image: data.user.profile_image_url || defaultClientAvatar
             });
           }
         }
@@ -69,7 +69,7 @@ const Header = () => {
               className="size-9 rounded-full object-cover border border-gray-200 dark:border-gray-700 bg-gray-100"
               src={user.image.startsWith("http") || user.image.startsWith("/") ? user.image : `/${user.image}`}
               onError={(e) => {
-                e.target.src = "https://via.placeholder.com/150?text=User";
+                e.target.src = defaultClientAvatar;
               }}
             />
             <div>

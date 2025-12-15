@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const BookConfirm = () => {
   const navigate = useNavigate();
@@ -37,8 +38,8 @@ const BookConfirm = () => {
               <img
                 alt={worker.name}
                 className="size-16 rounded-full object-cover border-2 border-white dark:border-gray-800"
-                src={worker.image_url}
-                onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                src={worker.image_url || defaultWorkerAvatar}
+                onError={(e) => { e.target.src = defaultWorkerAvatar; }}
               />
               <div className="flex-grow">
                 <h4 className="font-bold text-lg text-gray-900 dark:text-white">{worker.name}</h4>

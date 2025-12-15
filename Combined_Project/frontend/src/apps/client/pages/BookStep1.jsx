@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const BookStep1 = () => {
   const navigate = useNavigate();
@@ -91,8 +92,8 @@ const BookStep1 = () => {
           <img
             alt={worker.name}
             className="size-16 rounded-full object-cover border-2 border-white dark:border-gray-800"
-            src={worker.image_url || "https://via.placeholder.com/150"}
-            onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+            src={worker.image_url || defaultWorkerAvatar}
+            onError={(e) => { e.target.src = defaultWorkerAvatar; }}
           />
           <div className="flex-1">
             <p className="text-sm text-gray-500 dark:text-gray-400">You are booking:</p>
@@ -176,10 +177,10 @@ const BookStep1 = () => {
                               onClick={() => !isPast && setSelectedDate(dateStr)}
                               disabled={isPast}
                               className={`size-8 rounded-full flex items-center justify-center transition-colors ${isPast
-                                  ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                                  : isSelected
-                                    ? "bg-primary text-white font-bold"
-                                    : "hover:bg-primary/20"
+                                ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                                : isSelected
+                                  ? "bg-primary text-white font-bold"
+                                  : "hover:bg-primary/20"
                                 }`}
                             >
                               {day}

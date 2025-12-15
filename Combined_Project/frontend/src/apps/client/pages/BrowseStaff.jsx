@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const BrowseStaff = () => {
   const [searchParams] = useSearchParams();
@@ -317,9 +318,9 @@ const StaffCard = ({ member, onViewProfile, onBookNow }) => {
         <img
           alt={`Staff member ${member.name}`}
           className="w-full h-40 sm:h-48 object-cover"
-          src={member.image_url}
+          src={member.image_url || defaultWorkerAvatar}
           onError={(e) => {
-            e.target.src = "https://via.placeholder.com/300x200?text=No+Image";
+            e.target.src = defaultWorkerAvatar;
           }}
         />
         <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-full px-2 sm:px-3 py-1 sm:py-1.5">
