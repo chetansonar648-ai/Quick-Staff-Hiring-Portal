@@ -1,20 +1,22 @@
 import { query } from '../config/db.js';
 
 export const createBooking = async (req, res) => {
-  const { worker_id, service_id, booking_date, duration_hours, total_price, address, special_instructions } =
+  const { worker_id, service_id, booking_date, start_time, end_time, duration_hours, total_price, address, special_instructions } =
     req.body;
 
   try {
     const result = await query(
-      `INSERT INTO bookings (client_id, worker_id, service_id, booking_date, duration_hours,
+      `INSERT INTO bookings (client_id, worker_id, service_id, booking_date, start_time, end_time, duration_hours,
         total_price, address, special_instructions, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
        RETURNING *`,
       [
         req.user.id,
         worker_id,
         service_id,
         booking_date,
+        start_time || null,
+        end_time || null,
         duration_hours,
         total_price,
         address || 'Not specified',
@@ -27,6 +29,7 @@ export const createBooking = async (req, res) => {
     return res.status(500).json({ message: 'Failed to create booking', error: err.message });
   }
 };
+
 
 export const listBookings = async (req, res) => {
   const { status } = req.query;
@@ -84,19 +87,69 @@ export const listBookings = async (req, res) => {
 
 export const updateStatus = async (req, res) => {
   const { bookingId } = req.params;
-  const { status } = req.body;
+  const { status, cancelled_by, cancellation_reason } = req.body;
   const allowed = ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'];
   if (!allowed.includes(status)) {
     return res.status(400).json({ message: 'Invalid status' });
   }
   try {
-    const result = await query(
-      `UPDATE bookings SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-      [status, bookingId]
-    );
+    let queryText = `UPDATE bookings SET status = $1, updated_at = NOW()`;
+    const params = [status, bookingId];
+    let paramIndex = 3;
+
+    if (status === 'cancelled') {
+      queryText += `, cancelled_at = NOW(), cancelled_by = $${paramIndex}, cancellation_reason = $${paramIndex + 1}`;
+      params.push(cancelled_by || 'unknown', cancellation_reason || 'No reason provided');
+    }
+
+    queryText += ` WHERE id = $2 RETURNING *`;
+
+    const result = await query(queryText, params);
     return res.json({ booking: result.rows[0] });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to update status' });
+    return res.status(500).json({ message: 'Failed to update status', error: err.message });
+  }
+};
+
+export const rescheduleBooking = async (req, res) => {
+  const { bookingId } = req.params;
+  const { booking_date, start_time } = req.body;
+
+  if (!booking_date || !start_time) {
+    return res.status(400).json({ message: 'booking_date and start_time are required' });
+  }
+
+  try {
+    // First, check if the booking belongs to the client
+    const bookingCheck = await query(
+      `SELECT * FROM bookings WHERE id = $1 AND client_id = $2`,
+      [bookingId, req.user.id]
+    );
+
+    if (bookingCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Booking not found or you do not have permission to reschedule it' });
+    }
+
+    // Update the booking with new date and time
+    const result = await query(
+      `UPDATE bookings 
+       SET booking_date = $1, start_time = $2, updated_at = NOW() 
+       WHERE id = $3 AND client_id = $4
+       RETURNING *`,
+      [booking_date, start_time, bookingId, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Failed to reschedule booking' });
+    }
+
+    return res.json({
+      message: 'Booking rescheduled successfully',
+      booking: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Reschedule error:', err);
+    return res.status(500).json({ message: 'Failed to reschedule booking', error: err.message });
   }
 };
 

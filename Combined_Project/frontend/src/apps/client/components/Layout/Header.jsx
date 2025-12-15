@@ -23,24 +23,24 @@ const Header = () => {
   const title = pageTitleMap[location.pathname] || "Client Dashboard";
 
   const [user, setUser] = React.useState({
-    name: "Maria G.",
-    role: "Restaurant Owner",
+    name: "Client",
     image: defaultClientAvatar
   });
 
   React.useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const userId = localStorage.getItem("userId") || "mock-user-id";
+        const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+        if (!token) return;
+
         const response = await fetch("/api/profile", {
-          headers: { "x-user-id": userId }
+          headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {
           const data = await response.json();
           if (data.user) {
             setUser({
               name: data.user.full_name || "Client",
-              role: data.user.company || "Client",
               image: data.user.profile_image_url || defaultClientAvatar
             });
           }
@@ -67,14 +67,13 @@ const Header = () => {
             <img
               alt="Client Avatar"
               className="size-9 rounded-full object-cover border border-gray-200 dark:border-gray-700 bg-gray-100"
-              src={user.image.startsWith("http") || user.image.startsWith("/") ? user.image : `/${user.image}`}
+              src={user.image && (user.image.startsWith("http") || user.image.startsWith("/")) ? user.image : `/${user.image || defaultClientAvatar}`}
               onError={(e) => {
                 e.target.src = defaultClientAvatar;
               }}
             />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
             </div>
           </div>
         </div>

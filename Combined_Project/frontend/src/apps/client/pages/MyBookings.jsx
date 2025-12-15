@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
+import { ToastContainer } from "../../../components/Toast";
 
 const tabs = [
   { key: "upcoming", label: "Upcoming Bookings", icon: "event_upcoming" },
@@ -18,6 +19,7 @@ const MyBookings = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState({});
   const [loading, setLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     setSearchParams({ tab: activeTab });
@@ -64,26 +66,41 @@ const MyBookings = () => {
     }
   };
 
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      removeToast(id);
+    }, 3000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+
   const section = useMemo(() => {
     const currentBookings = bookings[activeTab];
     switch (activeTab) {
       case "upcoming":
-        return <UpcomingSection bookings={bookings.upcoming} loading={loading} onRefresh={fetchBookings} />;
+        return <UpcomingSection bookings={bookings.upcoming} loading={loading} onRefresh={fetchBookings} addToast={addToast} />;
       case "active":
-        return <ActiveSection bookings={bookings.active} loading={loading} />;
+        return <ActiveSection bookings={bookings.active} loading={loading} addToast={addToast} />;
       case "requested":
         return <RequestedSection bookings={bookings.requested} loading={loading} onRefresh={fetchBookings} />;
       case "completed":
         return <CompletedSection bookings={bookings.completed} loading={loading} />;
       case "pendingReviews":
-        return <PendingReviewsSection bookings={bookings.pendingReviews} loading={loading} onRefresh={fetchBookings} />;
+        return <PendingReviewsSection bookings={bookings.pendingReviews} loading={loading} onRefresh={fetchBookings} addToast={addToast} />;
       case "cancelled":
         return <CancelledJobsSection bookings={bookings.cancelled} loading={loading} />;
       case "past":
       default:
         return <PastSection bookings={bookings.past} loading={loading} />;
     }
-  }, [activeTab, bookings, loading]);
+  }, [activeTab, bookings, loading, addToast]);
 
   return (
     <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
@@ -91,7 +108,7 @@ const MyBookings = () => {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Your Bookings</h2>
         <button
           type="button"
-          onClick={() => navigate("/client/browse-staff")}
+          onClick={() => navigate("/client/book/step-1")}
           className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors gap-2"
         >
           <span className="material-symbols-outlined !text-xl">add</span>
@@ -115,6 +132,9 @@ const MyBookings = () => {
       </div>
 
       <div>{section}</div>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </main>
   );
 };
@@ -141,8 +161,7 @@ const Tab = ({ label, icon, badge, isActive, onClick }) => (
 );
 
 
-
-const UpcomingSection = ({ bookings, loading, onRefresh }) => {
+const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("Date (Soonest)"); // "Date (Soonest)", "Date (Latest)", "Status"
@@ -436,13 +455,14 @@ const UpcomingSection = ({ bookings, loading, onRefresh }) => {
             setRescheduleBooking(null);
             onRefresh();
           }}
+          addToast={addToast}
         />
       )}
     </div>
   );
 };
 
-const ActiveSection = ({ bookings, loading, onRefresh }) => {
+const ActiveSection = ({ bookings, loading, onRefresh, addToast }) => {
   const [viewBooking, setViewBooking] = useState(null);
   const [rescheduleBooking, setRescheduleBooking] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -514,7 +534,7 @@ const ActiveSection = ({ bookings, loading, onRefresh }) => {
             <div key={booking.id} className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
               <div className="p-5 flex-grow">
                 <div className="flex items-start gap-4 mb-4">
-                  <img alt={booking.worker_name} className="size-14 rounded-full object-cover" src={booking.worker_image || "https://via.placeholder.com/150"} onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} />
+                  <img alt={booking.worker_name} className="size-14 rounded-full object-cover" src={booking.worker_image || defaultWorkerAvatar} onError={(e) => { e.target.src = defaultWorkerAvatar; }} />
                   <div>
                     <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{booking.worker_name}</h3>
                     <p className="text-sm text-primary font-medium">{booking.service_type}</p>
@@ -579,6 +599,7 @@ const ActiveSection = ({ bookings, loading, onRefresh }) => {
             setRescheduleBooking(null);
             onRefresh();
           }}
+          addToast={addToast}
         />
       )}
     </div>
@@ -860,7 +881,7 @@ const CompletedSection = ({ bookings, loading }) => {
             >
               <div className="flex flex-col sm:flex-row gap-6">
                 <div className="flex flex-1 items-start gap-4">
-                  <img alt={booking.worker_name} className="size-14 rounded-full object-cover" src={booking.worker_image || "https://via.placeholder.com/150"} onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} />
+                  <img alt={booking.worker_name} className="size-14 rounded-full object-cover" src={booking.worker_image || defaultWorkerAvatar} onError={(e) => { e.target.src = defaultWorkerAvatar; }} />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">{booking.worker_name}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{booking.service_type} - {booking.service_description}</p>
@@ -891,7 +912,7 @@ const CompletedSection = ({ bookings, loading }) => {
                     View Details
                   </button>
                   <button
-                    onClick={() => navigate(`/book/step-1?workerId=${booking.worker_id}&serviceId=${booking.service_id}`)}
+                    onClick={() => navigate(`/client/book/step-1?workerId=${booking.worker_id}&serviceId=${booking.service_id}`)}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 min-w-[84px] cursor-pointer rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors whitespace-nowrap"
                   >
                     <span className="material-symbols-outlined !text-xl">replay</span>
@@ -953,7 +974,7 @@ const CancelledJobsSection = ({ bookings, loading }) => {
                   <tr key={booking.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <img alt={booking.worker_name} className="size-10 rounded-full object-cover" src={booking.worker_image || "https://via.placeholder.com/150"} onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} />
+                        <img alt={booking.worker_name} className="size-10 rounded-full object-cover" src={booking.worker_image || defaultWorkerAvatar} onError={(e) => { e.target.src = defaultWorkerAvatar; }} />
                         <div>
                           <div className="font-medium text-gray-800 dark:text-gray-200">{booking.worker_name}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">{parseFloat(booking.worker_rating || 0).toFixed(1)} stars</div>
@@ -994,7 +1015,7 @@ const CancelledJobsSection = ({ bookings, loading }) => {
   );
 };
 
-const PendingReviewsSection = ({ bookings, loading, onRefresh }) => {
+const PendingReviewsSection = ({ bookings, loading, onRefresh, addToast }) => {
   const [viewBooking, setViewBooking] = useState(null);
   const [reviewBooking, setReviewBooking] = useState(null);
 
@@ -1006,7 +1027,7 @@ const PendingReviewsSection = ({ bookings, loading, onRefresh }) => {
       {bookings.map((booking) => (
         <div key={booking.id} className="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <img alt={booking.worker_name} className="size-16 rounded-full object-cover" src={booking.worker_image || "https://via.placeholder.com/150"} onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} />
+            <img alt={booking.worker_name} className="size-16 rounded-full object-cover" src={booking.worker_image || defaultWorkerAvatar} onError={(e) => { e.target.src = defaultWorkerAvatar; }} />
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row justify-between items-start">
                 <div>
@@ -1044,6 +1065,7 @@ const PendingReviewsSection = ({ bookings, loading, onRefresh }) => {
           onSuccess={() => {
             setReviewBooking(null);
             onRefresh && onRefresh();
+            addToast && addToast("Review submitted successfully!");
           }}
         />
       )}
@@ -1180,7 +1202,7 @@ const ViewBookingModal = ({ booking, onClose }) => {
             <div>
               <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{booking.worker_name}</h4>
               <p className="text-primary font-medium text-lg">{booking.service_type}</p>
-              <p className="text-gray-500 dark:text-gray-400">Reference: <span className="font-mono">{booking.booking_reference || booking.id?.substring(0, 8)}</span></p>
+              <p className="text-gray-500 dark:text-gray-400">Reference: <span className="font-mono">{booking.booking_reference || String(booking.id).substring(0, 8)}</span></p>
             </div>
           </div>
 
@@ -1240,7 +1262,7 @@ const ViewBookingModal = ({ booking, onClose }) => {
   );
 };
 
-const RescheduleModal = ({ booking, onClose, onSuccess }) => {
+const RescheduleModal = ({ booking, onClose, onSuccess, addToast }) => {
   const [date, setDate] = useState(booking.booking_date ? new Date(booking.booking_date).toISOString().split('T')[0] : "");
   const [time, setTime] = useState(booking.start_time || "");
   const [loading, setLoading] = useState(false);
@@ -1256,16 +1278,26 @@ const RescheduleModal = ({ booking, onClose, onSuccess }) => {
           "Content-Type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
         },
-        body: JSON.stringify({ booking_date: date, start_time: time }) // Simplified
+        body: JSON.stringify({ booking_date: date, start_time: time })
       });
+
       if (response.ok) {
+        const result = await response.json();
+        // Show success toast
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        });
+        addToast(`✅ Booking rescheduled to ${formattedDate} at ${time}`, 'success');
         onSuccess();
       } else {
-        alert("Failed to reschedule. Please try again.");
+        const error = await response.json();
+        addToast(error.message || 'Failed to reschedule booking', 'error');
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred.");
+      addToast('An error occurred while rescheduling', 'error');
     } finally {
       setLoading(false);
     }

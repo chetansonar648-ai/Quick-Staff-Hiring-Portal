@@ -4,20 +4,22 @@ import defaultClientAvatar from "../../../assets/client_default_avatar.png";
 import defaultWorkerAvatar from "../../../assets/worker_default_avatar.png";
 
 const StaffProfile = () => {
-  console.log('StaffProfile component mounted!');
   const { id } = useParams();
   const navigate = useNavigate();
   const [worker, setWorker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [saving, setSaving] = useState(false);
+
+  // Add Toast helper (assuming it's available or we use alert for now, sticking to alert as per existing code but improved)
+  // Actually, I should use the toast context if available, but I'll stick to alert for simplicity unless context is easy.
+  // The user requested toasts earlier for MyBookings. I'll stick to window.alert/confirm for now as per previous pattern here, but fix the auth.
 
   useEffect(() => {
     const fetchWorkerDetails = async () => {
       try {
-        console.log('Fetching worker details for ID:', id);
         const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
-        console.log('Token:', token ? 'Present' : 'Missing');
-
         const response = await fetch(`/api/workers/${id}`, {
           headers: {
             "Content-Type": "application/json",
@@ -25,16 +27,8 @@ const StaffProfile = () => {
           }
         });
 
-        console.log('Response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error("Worker not found");
-        }
-
+        if (!response.ok) throw new Error("Worker not found");
         const data = await response.json();
-        console.log('Worker data:', data);
         setWorker(data);
       } catch (err) {
         console.error("Error fetching worker details:", err);
@@ -46,6 +40,66 @@ const StaffProfile = () => {
 
     fetchWorkerDetails();
   }, [id]);
+
+  const handleAddToSaved = async () => {
+    if (!worker) return;
+    const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+
+    if (!token) {
+      alert("Please login to save workers.");
+      return;
+    }
+
+    if (!confirm("Save this worker to your list?")) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/saved-workers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ worker_id: worker.id })
+      });
+
+      if (response.ok) {
+        alert("Worker saved successfully!");
+      } else if (response.status === 409) {
+        alert("Worker is already in your saved list.");
+      } else {
+        throw new Error("Failed to save");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save worker. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const isDateBooked = (date) => {
+    if (!worker.booked_dates) return false;
+    const dateString = date.toISOString().split('T')[0];
+    return worker.booked_dates.some(d => d.startsWith(dateString));
+  };
+
+  const isDateAvailable = (date) => {
+    if (!worker.availability || !Array.isArray(worker.availability)) return false; // Default to false if no info
+    const dayOfWeek = date.getDay(); // 0-6
+    const availEntry = worker.availability.find(
+      (a) => a.day_of_week === dayOfWeek || a.day_of_week === String(dayOfWeek)
+    );
+    return availEntry && availEntry.is_available;
+  };
 
   if (loading) {
     return (
@@ -78,12 +132,21 @@ const StaffProfile = () => {
     );
   }
 
-  // Construct services based on worker data
-  const services = [
-    { title: "Standard Service", desc: `General ${worker.role || "service"}`, price: `$${worker.hourly_rate || 0}/hr` },
-    { title: "Premium Service", desc: "Includes additional coordination", price: `$${(worker.hourly_rate || 0) + 10}/hr` },
-    { title: "Full Day", desc: "8 hours block", price: `$${(worker.hourly_rate || 0) * 7.5}` } // Discounted
-  ];
+  // Calendar Logic
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = [];
+
+  // Empty slots before 1st of month
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(null);
+  }
+  // Days of month
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(new Date(year, month, i));
+  }
 
   return (
     <main className="flex-1 overflow-y-auto p-6 md:p-8">
@@ -128,28 +191,12 @@ const StaffProfile = () => {
 
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (confirm("Save this worker to your list?")) {
-                        try {
-                          const response = await fetch(`/api/saved-workers/${worker.id}`, {
-                            method: "POST",
-                            headers: { "x-user-id": "mock-user-id" }
-                          });
-                          if (response.ok) {
-                            alert("Worker saved successfully!");
-                          } else {
-                            alert("Worker already saved or error occurred.");
-                          }
-                        } catch (e) {
-                          console.error(e);
-                          alert("Failed to save worker.");
-                        }
-                      }
-                    }}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    onClick={handleAddToSaved}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                   >
                     <span className="material-symbols-outlined">bookmark_add</span>
-                    <span>Add to Saved</span>
+                    <span>{saving ? "Saving..." : "Add to Saved"}</span>
                   </button>
                 </div>
               </div>
@@ -230,28 +277,15 @@ const StaffProfile = () => {
         </div>
 
         <div className="space-y-8">
-          <Section title="Services Offered">
-            <div className="space-y-4">
-              {services.map((s) => (
-                <div key={s.title} className="flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-100">{s.title}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{s.desc}</p>
-                  </div>
-                  <p className="font-bold text-lg text-primary">{s.price}</p>
-                </div>
-              ))}
-            </div>
-          </Section>
 
           <Section title="Availability Calendar">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                <button onClick={prevMonth} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
                   <span className="material-symbols-outlined">chevron_left</span>
                 </button>
-                <p className="font-semibold">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
-                <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                <p className="font-semibold">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+                <button onClick={nextMonth} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
               </div>
@@ -265,43 +299,26 @@ const StaffProfile = () => {
                 <div className="font-medium">Sa</div>
               </div>
               <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                {Array.from({ length: 35 }).map((_, i) => {
-                  const today = new Date();
-                  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
-                  const day = i - firstDayOfMonth + 1;
-                  const date = new Date(today.getFullYear(), today.getMonth(), day);
-                  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                {days.map((date, i) => {
+                  if (!date) return <div key={i}></div>;
 
-                  const isDate = day > 0 && day <= daysInMonth;
+                  const booked = isDateBooked(date);
+                  const available = !booked && isDateAvailable(date);
 
-                  // Check availability from worker data
-                  let isAvailable = false;
-                  if (isDate && worker.availability) {
-                    const dayOfWeek = date.getDay(); // 0-6
-                    const availEntry = worker.availability.find(
-                      (a) => a.day_of_week === dayOfWeek || a.day_of_week === String(dayOfWeek)
-                    );
-                    if (availEntry && availEntry.is_available) {
-                      isAvailable = true;
-                    }
-                  }
+                  let className = "py-1 flex items-center justify-center rounded-full size-8 mx-auto relative";
 
-                  let content = isDate ? day : "";
-                  let className = "py-1 flex items-center justify-center";
-
-                  if (isDate) {
-                    if (isAvailable) {
-                      className += " bg-primary/10 text-primary font-bold rounded-full size-8 mx-auto";
-                    } else {
-                      className += " text-gray-400 dark:text-gray-600";
-                    }
+                  if (booked) {
+                    className += " bg-red-100 text-red-600 font-bold";
+                  } else if (available) {
+                    className += " bg-primary/10 text-primary font-bold";
                   } else {
-                    className += " text-gray-400 dark:text-gray-500 opacity-0";
+                    className += " text-gray-400 dark:text-gray-600";
                   }
 
                   return (
-                    <div key={i} className={className}>
-                      {content}
+                    <div key={i} className={className} title={booked ? "Booked" : available ? "Available" : "Not Available"}>
+                      {date.getDate()}
+                      {booked && <div className="absolute bottom-0 size-1 bg-red-500 rounded-full"></div>}
                     </div>
                   );
                 })}
@@ -312,7 +329,7 @@ const StaffProfile = () => {
                   <span className="text-sm text-gray-600 dark:text-gray-300">Available</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="size-3 rounded-full bg-red-500"></div>
+                  <div className="size-3 rounded-full bg-red-100 border border-red-200"></div>
                   <span className="text-sm text-gray-600 dark:text-gray-300">Booked</span>
                 </div>
               </div>

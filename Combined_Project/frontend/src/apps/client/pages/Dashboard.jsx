@@ -22,20 +22,34 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch booking stats
-      const statsRes = await api.get("/bookings/stats/summary");
-      if (statsRes.data) {
+      // Fetch booking stats with proper token
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+      const statsRes = await fetch("/api/bookings/stats/summary", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
         setStats({
-          active: statsRes.data.active || 0,
-          completed: statsRes.data.completed || 0,
+          active: statsData.active || 0,
+          completed: statsData.completed || 0,
           pendingReviews: 0
         });
       }
 
       // Fetch pending reviews count
       try {
-        const reviewsRes = await api.get("/reviews/pending");
-        setStats(prev => ({ ...prev, pendingReviews: reviewsRes.data?.length || 0 }));
+        const reviewsRes = await fetch("/api/reviews/pending", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          setStats(prev => ({ ...prev, pendingReviews: reviewsData?.length || 0 }));
+        }
       } catch (err) {
         console.log("Reviews endpoint not available yet");
       }

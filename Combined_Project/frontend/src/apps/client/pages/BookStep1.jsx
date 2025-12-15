@@ -8,6 +8,7 @@ const BookStep1 = () => {
   const workerId = searchParams.get("workerId");
   const [worker, setWorker] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
 
   // Form state - removed service selection
   const [selectedDate, setSelectedDate] = useState(null);
@@ -27,11 +28,19 @@ const BookStep1 = () => {
         })
         .then((data) => {
           setWorker(data);
+          setLoading(false);
         })
+        .catch((err) => {
+          console.error(err);
+          setLoading(false);
+        });
+    } else {
+      // Fetch categories if starting fresh
+      fetch("/api/workers/categories/list")
+        .then((res) => res.json())
+        .then((data) => setCategories(data))
         .catch((err) => console.error(err))
         .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
     }
   }, [workerId]);
 
@@ -64,24 +73,46 @@ const BookStep1 = () => {
     });
   };
 
-  if (!worker) {
+  if (!workerId) {
     return (
-      <main className="flex-1 overflow-y-auto p-6 md:p-8 flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md">
-          <div className="flex justify-center">
-            <span className="material-symbols-outlined text-6xl text-gray-300">work_off</span>
+      <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Start New Booking</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-lg">Select a service to find the perfect professional</p>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Worker Not Found</h2>
-          <p className="text-gray-500">The professional you are looking for could not be found or no worker was selected.</p>
-          <button
-            onClick={() => navigate("/client/browse-staff")}
-            className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            Browse Staff
-          </button>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {categories.map((cat) => (
+              <button
+                key={cat.category}
+                onClick={() => navigate(`/client/browse-staff?category=${encodeURIComponent(cat.category)}`)}
+                className="group flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary hover:shadow-lg transition-all"
+              >
+                <div className="size-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
+                  <span className="material-symbols-outlined text-3xl">category</span>
+                </div>
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg">{cat.category}</h3>
+                <p className="text-sm text-gray-500 mt-1">{cat.count} Professionals</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => navigate("/client/browse-staff")}
+              className="text-primary font-bold hover:underline"
+            >
+              Browse all professionals
+            </button>
+          </div>
         </div>
       </main>
     );
+  }
+
+  if (!worker) {
+    return <div className="text-center py-12">Worker not found.</div>;
   }
 
   return (

@@ -46,7 +46,7 @@ const SavedWorkers = () => {
           }
         });
         if (response.ok) {
-          setWorkers(prev => prev.filter(w => w.id !== workerId));
+          setWorkers(prev => prev.filter(w => w.worker_id !== workerId));
         }
       } catch (error) {
         console.error("Error removing saved worker:", error);
@@ -107,7 +107,7 @@ const SavedWorkers = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => handleRemove(w.id)}
+                    onClick={() => handleRemove(w.worker_id)}
                     className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 p-1.5 sm:p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
                   >
                     <span className="material-symbols-outlined text-base sm:text-lg">
@@ -140,14 +140,14 @@ const SavedWorkers = () => {
                   <div className="mt-auto flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <button
                       type="button"
-                      onClick={() => navigate(`/client/book/step-1?workerId=${w.id}`)}
+                      onClick={() => navigate(`/client/book/step-1?workerId=${w.worker_id}`)}
                       className="flex-1 flex min-w-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-3 bg-primary text-white text-xs sm:text-sm font-bold hover:bg-primary/90 transition-colors whitespace-nowrap"
                     >
                       Book Now
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigate(`/client/staff/${w.id}`)}
+                      onClick={() => navigate(`/client/staff/${w.worker_id}`)}
                       className="flex-1 flex min-w-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-3 bg-gray-200/80 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 text-xs sm:text-sm font-bold hover:bg-gray-300/80 dark:hover:bg-gray-700/80 transition-colors whitespace-nowrap"
                     >
                       View Profile

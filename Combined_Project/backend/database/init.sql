@@ -79,12 +79,17 @@ CREATE TABLE bookings (
     worker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     service_id INTEGER REFERENCES services(id) ON DELETE CASCADE, -- Fixed reference to services_id
     booking_date TIMESTAMP NOT NULL,
+    start_time TIME,                  -- Start time for the booking
+    end_time TIME,                    -- End time for the booking
     duration_hours INTEGER,
     total_price DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled')),
     address TEXT NOT NULL,            -- Service address
     special_instructions TEXT,
     payment_status VARCHAR(50) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'refunded', 'failed')),
+    cancelled_by VARCHAR(50),         -- Track who cancelled (client/worker)
+    cancellation_reason TEXT,         -- Reason for cancellation
+    cancelled_at TIMESTAMP,           -- When was it cancelled
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

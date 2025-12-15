@@ -68,6 +68,7 @@ export const getWorkerProfile = async (req, res, next) => {
               wp.skills,
               COALESCE(wp.hourly_rate, 25) as hourly_rate,
               wp.availability,
+              wp.portfolio,
               COALESCE(wp.rating, 0) as rating,
               COALESCE(wp.total_reviews, 0) as rating_count,
               wp.completed_jobs,
@@ -84,7 +85,32 @@ export const getWorkerProfile = async (req, res, next) => {
       return res.status(404).json({ message: "Worker not found" });
     }
 
-    res.json(result.rows[0]);
+    const worker = result.rows[0];
+
+    // Get recent reviews
+    const reviewsResult = await query(
+      `SELECT r.*, u.name as client_name, u.profile_image as client_image
+       FROM reviews r
+       JOIN users u ON u.id = r.reviewer_id
+       WHERE r.reviewee_id = $1
+       ORDER BY r.created_at DESC
+       LIMIT 5`,
+      [workerId]
+    );
+    worker.reviews = reviewsResult.rows;
+
+    // Get future booked dates
+    const bookingsResult = await query(
+      `SELECT booking_date 
+       FROM bookings 
+       WHERE worker_id = $1 
+         AND status IN ('accepted', 'in_progress') 
+         AND booking_date >= CURRENT_DATE`,
+      [workerId]
+    );
+    worker.booked_dates = bookingsResult.rows.map(b => b.booking_date);
+
+    res.json(worker);
   } catch (err) {
     next(err);
   }
@@ -314,6 +340,12 @@ export const listWorkers = async (req, res, next) => {
       paramIndex++;
     }
 
+    if (location) {
+      params.push(`%${location}%`);
+      whereClause += ` AND wp.service_location ILIKE $${paramIndex}`;
+      paramIndex++;
+    }
+
     const result = await query(
       `SELECT u.id, u.name, 
               COALESCE(u.profile_image, 'https://via.placeholder.com/300x200?text=Worker') as image_url, 
@@ -325,7 +357,7 @@ export const listWorkers = async (req, res, next) => {
               wp.bio as description,
               wp.service_location as location
        FROM users u
-       LEFT JOIN worker_profiles wp ON wp.user_id = u.id
+       JOIN worker_profiles wp ON wp.user_id = u.id
        ${whereClause}
        ORDER BY wp.rating DESC NULLS LAST, wp.total_reviews DESC NULLS LAST`,
       params

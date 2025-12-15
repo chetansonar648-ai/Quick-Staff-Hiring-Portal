@@ -75,12 +75,17 @@ const BrowseStaff = () => {
 
   const handleSaveWorker = async (workerId) => {
     try {
-      const userId = "mock-user-id"; // In production, get from auth context
+      const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+      if (!token) {
+        alert("Please login to save workers.");
+        return;
+      }
+
       const response = await fetch(`/api/saved-workers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": userId
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ worker_id: workerId })
       });
