@@ -16,6 +16,7 @@ import savedClientRoutes from './routes/savedClients.js';
 import workerRoutes from './routes/workers.js';
 import reviewRoutes from './routes/reviews.js';
 import profileRoutes from './routes/profile.js';
+import usersRoutes from './routes/users.js';
 // import paymentRoutes from './routes/payments.js'; // Removed
 // app.use('/api/payments', paymentRoutes); // Removed
 
@@ -52,6 +53,7 @@ app.use('/api/saved-workers', savedWorkerRoutes);
 app.use('/api/saved-clients', savedClientRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/users', usersRoutes);
 
 // Global error handler
 app.use(errorHandler);

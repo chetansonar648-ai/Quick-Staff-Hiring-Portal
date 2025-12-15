@@ -139,3 +139,35 @@ export const getBookingStats = async (req, res) => {
   }
 };
 
+export const getBookingsByClientId = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    // Only workers can use this endpoint
+    if (req.user.role !== 'worker') {
+      return res.status(403).json({ message: 'Only workers can view client booking history' });
+    }
+
+    const result = await query(
+      `SELECT
+        b.*,
+        b.total_price as total_amount,
+        COALESCE(s.name, 'General Service') as service_name,
+        s.image_url as service_image,
+        u.name as client_name,
+        u.profile_image as client_image
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.client_id = u.id
+      WHERE b.client_id = $1 AND b.worker_id = $2
+      ORDER BY b.created_at DESC`,
+      [clientId, req.user.id]
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching client bookings:', err);
+    return res.status(500).json({ message: 'Error fetching bookings' });
+  }
+};
+

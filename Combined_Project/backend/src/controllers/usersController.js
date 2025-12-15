@@ -41,3 +41,21 @@ export const updateProfile = async (req, res, next) => {
   }
 };
 
+export const getUserById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      "SELECT id, name, email, role, phone, address, profile_image FROM users WHERE id=$1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+};
+

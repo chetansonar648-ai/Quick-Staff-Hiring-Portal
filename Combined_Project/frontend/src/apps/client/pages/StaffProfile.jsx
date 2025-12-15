@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const StaffProfile = () => {
+  console.log('StaffProfile component mounted!');
   const { id } = useParams();
   const navigate = useNavigate();
   const [worker, setWorker] = useState(null);
@@ -11,17 +12,27 @@ const StaffProfile = () => {
   useEffect(() => {
     const fetchWorkerDetails = async () => {
       try {
+        console.log('Fetching worker details for ID:', id);
         const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+        console.log('Token:', token ? 'Present' : 'Missing');
+
         const response = await fetch(`/api/workers/${id}`, {
           headers: {
             "Content-Type": "application/json",
             ...(token && { "Authorization": `Bearer ${token}` })
           }
         });
+
+        console.log('Response status:', response.status);
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
           throw new Error("Worker not found");
         }
+
         const data = await response.json();
+        console.log('Worker data:', data);
         setWorker(data);
       } catch (err) {
         console.error("Error fetching worker details:", err);
@@ -149,7 +160,7 @@ const StaffProfile = () => {
 
           <Section title="Experience & Skills">
             <div className="flex flex-wrap gap-3">
-              {worker.skills && worker.skills.length > 0 ? (
+              {worker.skills && Array.isArray(worker.skills) && worker.skills.length > 0 ? (
                 worker.skills.map((skill, index) => (
                   <span key={index} className="bg-primary/10 text-primary text-sm font-medium px-3 py-1.5 rounded-full">
                     {skill.skill_name || skill}
@@ -163,7 +174,7 @@ const StaffProfile = () => {
 
           <Section title="Portfolio / Gallery">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {worker.portfolio && worker.portfolio.length > 0 ? (
+              {worker.portfolio && Array.isArray(worker.portfolio) && worker.portfolio.length > 0 ? (
                 worker.portfolio.map((img, index) => (
                   <img key={index} alt="Portfolio" className="rounded-lg object-cover aspect-square" src={img.image_url || img} />
                 ))
@@ -175,7 +186,7 @@ const StaffProfile = () => {
 
           <Section title={`Client Reviews (${worker.reviews?.length || 0})`}>
             <div className="space-y-6">
-              {worker.reviews && worker.reviews.length > 0 ? (
+              {worker.reviews && Array.isArray(worker.reviews) && worker.reviews.length > 0 ? (
                 worker.reviews.map((r, index) => (
                   <div key={index}>
                     <div className="flex items-start gap-4">

@@ -77,7 +77,12 @@ const SavedClients = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-center">
-                    <button className="px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">View Profile</button>
+                    <Link
+                      to={`/worker/client/${client.id}`}
+                      className="px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      View Profile
+                    </Link>
                     <button className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">Contact</button>
                   </div>
                 </li>
