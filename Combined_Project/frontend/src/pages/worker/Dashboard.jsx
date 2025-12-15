@@ -204,9 +204,12 @@ const WorkerDashboard = () => {
                           </div>
                         </div>
                         <div className="shrink-0">
-                          <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-gray-100 dark:bg-gray-700 text-[#111618] dark:text-gray-200 text-sm font-medium leading-normal w-fit hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-150">
+                          <Link
+                            to={`/worker/jobs?status=${job.status}`}
+                            className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-gray-100 dark:bg-gray-700 text-[#111618] dark:text-gray-200 text-sm font-medium leading-normal w-fit hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-150"
+                          >
                             <span className="truncate">View Details</span>
-                          </button>
+                          </Link>
                         </div>
                       </div>
                     ))}

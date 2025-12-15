@@ -205,19 +205,40 @@ export const updateJobStatus = async (req, res, next) => {
     const { status } = req.body;
     const workerId = req.user.id;
 
-    // Optional: Add validation for valid transitions
+    // Validate status
+    const allowedStatuses = ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
 
-    const result = await query(
-      `UPDATE bookings 
-       SET status = $1, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $2 AND worker_id = $3 
-       RETURNING *`,
-      [status, id, workerId]
+    // Get current status before updating (for undo functionality)
+    const currentJob = await query(
+      `SELECT status FROM bookings WHERE id = $1 AND worker_id = $2`,
+      [id, workerId]
     );
 
-    if (result.rows.length === 0) {
+    if (currentJob.rows.length === 0) {
       return res.status(404).json({ message: "Job not found or unauthorized" });
     }
+
+    const previousStatus = currentJob.rows[0].status;
+
+    // Don't allow changes to completed jobs
+    if (previousStatus === 'completed') {
+      return res.status(400).json({ message: "Cannot modify completed jobs" });
+    }
+
+    // Update status with previous_status and status_changed_at for undo support
+    const result = await query(
+      `UPDATE bookings 
+       SET status = $1, 
+           previous_status = $2, 
+           status_changed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $3 AND worker_id = $4 
+       RETURNING *`,
+      [status, previousStatus, id, workerId]
+    );
 
     // If status is completed, increment worker_profiles.completed_jobs
     if (status === 'completed') {
@@ -258,6 +279,115 @@ export const listWorkers = async (_req, res, next) => {
        WHERE u.role='worker' AND u.is_active = TRUE`
     );
     res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Undo a job status change (within 60-second window)
+export const undoJobStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const workerId = req.user.id;
+
+    // Get current job with undo info
+    const jobResult = await query(
+      `SELECT id, status, previous_status, status_changed_at 
+       FROM bookings 
+       WHERE id = $1 AND worker_id = $2`,
+      [id, workerId]
+    );
+
+    if (jobResult.rows.length === 0) {
+      return res.status(404).json({ message: "Job not found or unauthorized" });
+    }
+
+    const job = jobResult.rows[0];
+
+    // Check if previous_status exists
+    if (!job.previous_status) {
+      return res.status(400).json({ message: "No previous status to revert to" });
+    }
+
+    // Check if within 60-second window
+    const changedAt = new Date(job.status_changed_at);
+    const now = new Date();
+    const elapsedSeconds = (now - changedAt) / 1000;
+
+    if (elapsedSeconds > 60) {
+      return res.status(400).json({
+        message: "Undo window expired (60 seconds)",
+        elapsed: Math.floor(elapsedSeconds)
+      });
+    }
+
+    // Revert to previous status and clear undo data
+    const result = await query(
+      `UPDATE bookings 
+       SET status = $1, 
+           previous_status = NULL, 
+           status_changed_at = NULL,
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND worker_id = $3 
+       RETURNING *`,
+      [job.previous_status, id, workerId]
+    );
+
+    res.json({
+      message: "Status reverted successfully",
+      booking: result.rows[0]
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Save a client from a completed job
+export const saveClientFromJob = async (req, res, next) => {
+  try {
+    const { jobId } = req.params;
+    const workerId = req.user.id;
+
+    // Get the job and verify it's completed
+    const jobResult = await query(
+      `SELECT client_id, status FROM bookings WHERE id = $1 AND worker_id = $2`,
+      [jobId, workerId]
+    );
+
+    if (jobResult.rows.length === 0) {
+      return res.status(404).json({ message: "Job not found or unauthorized" });
+    }
+
+    const job = jobResult.rows[0];
+
+    // Only allow saving clients from completed jobs
+    if (job.status !== 'completed') {
+      return res.status(400).json({ message: "Can only save clients from completed jobs" });
+    }
+
+    // Insert with ON CONFLICT to prevent duplicates
+    const result = await query(
+      `INSERT INTO saved_clients (worker_id, client_id)
+       VALUES ($1, $2)
+       ON CONFLICT (worker_id, client_id) DO NOTHING
+       RETURNING *`,
+      [workerId, job.client_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(200).json({ message: "Client already saved", alreadySaved: true });
+    }
+
+    // Get client details for response
+    const clientResult = await query(
+      `SELECT id, name, email, phone, profile_image FROM users WHERE id = $1`,
+      [job.client_id]
+    );
+
+    res.status(201).json({
+      message: "Client saved successfully",
+      client: clientResult.rows[0]
+    });
   } catch (err) {
     next(err);
   }

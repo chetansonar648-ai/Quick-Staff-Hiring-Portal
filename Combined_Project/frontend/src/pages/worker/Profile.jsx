@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import WorkerLayout from '../../components/WorkerLayout';
 import { fetchWorkerMe, updateWorkerProfile, fetchServiceNames, uploadProfilePicture, changePassword } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -14,6 +15,7 @@ const WorkerProfile = () => {
   const [serviceNames, setServiceNames] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const { showToast } = useToast();
 
   // Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -122,6 +124,7 @@ const WorkerProfile = () => {
     const validationError = validateAvailabilityData();
     if (validationError) {
       setError(validationError);
+      showToast(validationError, 'error');
       return;
     }
 
@@ -142,10 +145,12 @@ const WorkerProfile = () => {
         availability: profile.availability
       });
       setSuccess(true);
+      showToast('Profile updated successfully', 'success');
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Failed to save changes. Please try again.');
+      showToast(err.message || 'Failed to save changes', 'error');
     } finally {
       setSaving(false);
     }
