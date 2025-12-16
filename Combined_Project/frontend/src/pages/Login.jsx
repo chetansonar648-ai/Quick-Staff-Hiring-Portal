@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import loginBg from "../assets/login_background.png";
 
 const Login = () => {
   const { login, user } = useAuth();
@@ -41,7 +42,7 @@ const Login = () => {
         <div className="flex h-full grow flex-col">
           <div className="flex flex-1">
             <div className="flex w-full flex-col lg:flex-row">
-              <div className="relative hidden w-full flex-col items-center justify-center bg-cover bg-center lg:flex lg:w-1/2" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDes_yBYhzt9FsGor_AGp885ax1zWpNm9rIav664KBbqovPblTXYaIFKiWu8xkrSvltvqcUcBuz7g8AL2Xkh2RcCoJg_b5SSkFF2WeAtIB2e21GKn7O9VQkkqLBuTWzY4Tkf7v6NsD7Kw7aSolrWp9DEs8rgQVbmv6HjTZo7CBdpccfnJyGIyTtxax57UoVJhY5a4R9CvNyXr2uH7eW0ksG7wI_00fx5BSAvt4J3R59ahf5joPV2xc1EgZpEs5Ndiusc73Gxt3CTQ')" }}>
+              <div className="relative hidden w-full flex-col items-center justify-center bg-cover bg-center lg:flex lg:w-1/2" style={{ backgroundImage: `url(${loginBg})` }}>
                 <div className="absolute inset-0 bg-[#0d7ff2]/80"></div>
                 <div className="relative z-10 flex flex-col items-start gap-6 p-12 text-white max-w-md">
                   <div className="text-3xl font-bold">Quick Staff</div>

@@ -150,17 +150,12 @@ const WorkerDashboard = () => {
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
                   <p className="text-[#111618] dark:text-gray-300 text-base font-medium leading-normal">Jobs Completed</p>
                   <p className="text-[#111618] dark:text-white tracking-light text-3xl font-bold leading-tight">{stats.completed_jobs}</p>
-                  <p className="text-positive text-sm font-medium leading-normal flex items-center gap-1">
-                    <span className="material-symbols-outlined text-base">arrow_upward</span>
-                    <span>2 this week</span>
-                  </p>
                 </div>
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
                   <p className="text-[#111618] dark:text-gray-300 text-base font-medium leading-normal">Average Rating</p>
                   <p className="text-[#111618] dark:text-white tracking-light text-3xl font-bold leading-tight flex items-center gap-1.5">
                     {Number(stats.rating || 0).toFixed(1)} <span className="material-symbols-outlined !text-3xl text-yellow-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                   </p>
-                  <p className="text-positive text-sm font-medium leading-normal">+0.1 from last job</p>
                 </div>
               </div>
 

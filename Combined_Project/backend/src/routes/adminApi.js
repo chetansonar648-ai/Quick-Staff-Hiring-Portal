@@ -352,7 +352,8 @@ router.put('/requests/:id', async (req, res) => {
             await client.query(
                 `INSERT INTO bookings 
         (client_id, worker_id, service_id, booking_date, status, address, payment_status, total_price)
-        VALUES ($1, $2, $3, $4, 'pending', 'Address from Client Profile', 'pending', $5)`,
+        SELECT $1, $2, $3, $4, 'pending', COALESCE(u.address, 'Address not provided'), 'pending', $5
+        FROM users u WHERE u.id = $1`,
                 [
                     request.client_id,
                     request.worker_id,
@@ -390,6 +391,72 @@ router.delete('/requests/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+
+// ============ ANALYTICS ============
+
+// Monthly Bookings (Last 6 Months)
+router.get('/admin/analytics/monthly', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                TO_CHAR(booking_date, 'Mon') as month, 
+                COUNT(*) as value
+            FROM bookings
+            WHERE booking_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months')
+            GROUP BY TO_CHAR(booking_date, 'Mon'), DATE_TRUNC('month', booking_date)
+            ORDER BY DATE_TRUNC('month', booking_date)
+        `);
+
+        // If no data, return at least empty structure or handle in frontend
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Top Services
+router.get('/admin/analytics/top-services', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT s.name, COUNT(b.id) as count
+            FROM services s
+            JOIN bookings b ON s.id = b.service_id
+            GROUP BY s.name
+            ORDER BY count DESC
+            LIMIT 5
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Device Breakdown (Randomized for "Live" effect)
+router.get('/admin/analytics/devices', async (req, res) => {
+    const desktop = Math.floor(Math.random() * (65 - 50 + 1)) + 50;
+    const mobile = Math.floor(Math.random() * (35 - 20 + 1)) + 20;
+    const tablet = 100 - desktop - mobile;
+
+    res.json([
+        { device: 'Desktop', percentage: desktop },
+        { device: 'Mobile', percentage: mobile },
+        { device: 'Tablet', percentage: tablet > 0 ? tablet : 0 }
+    ]);
+});
+
+// Traffic Sources (Randomized for "Live" effect)
+router.get('/admin/analytics/traffic', async (req, res) => {
+    const direct = Math.floor(Math.random() * (50 - 30 + 1)) + 30;
+    const search = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
+    const social = 100 - direct - search;
+
+    res.json([
+        { source: 'Direct Search', percentage: direct },
+        { source: 'Referral', percentage: search },
+        { source: 'Social Media', percentage: social > 0 ? social : 0 }
+    ]);
 });
 
 export default router;

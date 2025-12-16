@@ -8,8 +8,20 @@ export const createReview = async (req, res) => {
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [booking_id, req.user.id, reviewee_id, rating, comment]
     );
+
+    // Update worker profile stats
+    await query(
+      `UPDATE worker_profiles 
+       SET 
+         total_reviews = total_reviews + 1,
+         rating = ((rating * total_reviews) + $1) / (total_reviews + 1)
+       WHERE user_id = $2`,
+      [rating, reviewee_id]
+    );
+
     return res.status(201).json({ review: result.rows[0] });
   } catch (err) {
+    console.error("Create review error:", err);
     return res.status(500).json({ message: 'Failed to create review' });
   }
 };

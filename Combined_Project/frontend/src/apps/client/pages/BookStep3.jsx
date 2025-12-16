@@ -207,7 +207,7 @@ const BookStep3 = () => {
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input className="form-checkbox rounded text-primary focus:ring-primary focus:ring-offset-background-light dark:focus:ring-offset-gray-900" type="checkbox" />
                   <span className="text-sm text-gray-600 dark:text-gray-300">
-                    I have read and agree to the <a className="font-medium text-primary hover:underline" href="#">Terms and Conditions</a> and <a className="font-medium text-primary hover:underline" href="#">Cancellation Policy</a>.
+                    I have read and agree to the <a className="font-medium text-primary hover:underline" href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> and <a className="font-medium text-primary hover:underline" href="/cancellation-policy" target="_blank" rel="noopener noreferrer">Cancellation Policy</a>.
                   </span>
                 </label>
               </div>

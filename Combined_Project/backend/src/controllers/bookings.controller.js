@@ -224,3 +224,59 @@ export const getBookingsByClientId = async (req, res) => {
   }
 };
 
+export const createBookingReview = async (req, res) => {
+  const { bookingId } = req.params;
+  const { rating, comment } = req.body;
+
+  if (!rating) return res.status(400).json({ message: 'Rating is required' });
+
+  try {
+    // 1. Verify booking exists, belongs to client, and get worker_id
+    const bookingRes = await query(
+      `SELECT * FROM bookings WHERE id = $1 AND client_id = $2`,
+      [bookingId, req.user.id]
+    );
+
+    if (bookingRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Booking not found or unauthorized' });
+    }
+
+    const booking = bookingRes.rows[0];
+    const workerId = booking.worker_id;
+
+    // 2. Check if already reviewed (optional but good)
+    const existingReview = await query(
+      `SELECT id FROM reviews WHERE booking_id = $1`,
+      [bookingId]
+    );
+    if (existingReview.rows.length > 0) {
+      return res.status(400).json({ message: 'Booking already reviewed' });
+    }
+
+    // 3. Insert Review
+    const reviewRes = await query(
+      `INSERT INTO reviews (booking_id, reviewer_id, reviewee_id, rating, comment)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [bookingId, req.user.id, workerId, rating, comment]
+    );
+
+    // 4. Update Worker Profile Stats (UPSERT)
+    await query(
+      `INSERT INTO worker_profiles (user_id, rating, total_reviews, completed_jobs)
+       VALUES ($1, $2, 1, 0)
+       ON CONFLICT (user_id) DO UPDATE SET
+         total_reviews = worker_profiles.total_reviews + 1,
+         rating = ((COALESCE(worker_profiles.rating, 0) * COALESCE(worker_profiles.total_reviews, 0)) + $2) / (COALESCE(worker_profiles.total_reviews, 0) + 1),
+         updated_at = CURRENT_TIMESTAMP`,
+      [workerId, rating]
+    );
+
+    return res.status(201).json({ review: reviewRes.rows[0], message: "Review submitted successfully" });
+
+  } catch (err) {
+    console.error("Error submitting review:", err);
+    return res.status(500).json({ message: 'Failed to submit review', error: err.message });
+  }
+};
+

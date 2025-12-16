@@ -221,17 +221,7 @@ const StaffProfile = () => {
             </div>
           </Section>
 
-          <Section title="Portfolio / Gallery">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {worker.portfolio && Array.isArray(worker.portfolio) && worker.portfolio.length > 0 ? (
-                worker.portfolio.map((img, index) => (
-                  <img key={index} alt="Portfolio" className="rounded-lg object-cover aspect-square" src={img.image_url || img} />
-                ))
-              ) : (
-                <p className="text-gray-500 col-span-full">No portfolio items available.</p>
-              )}
-            </div>
-          </Section>
+
 
           <Section title={`Client Reviews (${worker.reviews?.length || 0})`}>
             <div className="space-y-6">

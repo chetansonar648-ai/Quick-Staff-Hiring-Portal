@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth.js';
-import { createBooking, listBookings, updateStatus, getBookingStats, getBookingsByClientId, rescheduleBooking } from '../controllers/bookings.controller.js';
+import { createBooking, listBookings, updateStatus, getBookingStats, getBookingsByClientId, rescheduleBooking, createBookingReview } from '../controllers/bookings.controller.js';
 
 const validateBooking = [
   body('worker_id').isInt(),
@@ -28,5 +28,8 @@ router.get('/client/:clientId', authenticate(['worker']), getBookingsByClientId)
 router.patch('/:bookingId/reschedule', authenticate(['client']), rescheduleBooking);
 
 router.patch('/:bookingId/status', authenticate(['worker', 'client']), updateStatus);
+
+// Create Booking Review by ID
+router.post('/:bookingId/review', authenticate(['client']), createBookingReview);
 
 export default router;

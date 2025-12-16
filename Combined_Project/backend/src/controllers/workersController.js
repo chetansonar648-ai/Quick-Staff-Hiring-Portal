@@ -68,7 +68,6 @@ export const getWorkerProfile = async (req, res, next) => {
               wp.skills,
               COALESCE(wp.hourly_rate, 25) as hourly_rate,
               wp.availability,
-              wp.portfolio,
               COALESCE(wp.rating, 0) as rating,
               COALESCE(wp.total_reviews, 0) as rating_count,
               wp.completed_jobs,
@@ -215,8 +214,8 @@ export const getWorkerJobs = async (req, res, next) => {
              u.name as client_name, u.profile_image as client_image,
              u.phone as client_phone, u.email as client_email
       FROM bookings b
-      JOIN services s ON b.service_id = s.id
-      JOIN users u ON b.client_id = u.id
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.client_id = u.id
       WHERE b.worker_id = $1 ${statusClause}
       ORDER BY b.booking_date DESC
     `;

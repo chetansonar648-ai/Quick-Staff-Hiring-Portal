@@ -161,6 +161,7 @@ import HelpCenterPage from "./pages/HelpCenterPage.jsx";
 import TrustSafetyPage from "./pages/TrustSafetyPage.jsx";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage.jsx";
 import TermsOfServicePage from "./pages/TermsOfServicePage.jsx";
+import CancellationPolicyPage from "./pages/CancellationPolicyPage.jsx";
 import WorkerDashboard from "./pages/worker/Dashboard.jsx";
 import WorkerJobs from "./pages/worker/Jobs.jsx";
 import WorkerProfile from "./pages/worker/Profile.jsx";
@@ -192,6 +193,7 @@ const App = () => {
         <Route path="/trust-safety" element={<TrustSafetyPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+        <Route path="/cancellation-policy" element={<CancellationPolicyPage />} />
 
         {/* Client App Route */}
         <Route path="/client/*" element={<ClientApp />} />

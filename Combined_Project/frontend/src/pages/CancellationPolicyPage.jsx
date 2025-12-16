@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const TermsOfServicePage = () => {
+const CancellationPolicyPage = () => {
     return (
         <div className="font-display bg-background-light dark:bg-background-dark min-h-screen text-text-light dark:text-text-dark">
             <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 py-4 px-6 md:px-12 sticky top-0 z-50">
@@ -21,42 +21,35 @@ const TermsOfServicePage = () => {
             </header>
 
             <main className="max-w-4xl mx-auto px-6 py-12">
-                <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">Terms of Service</h1>
+                <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">Cancellation Policy</h1>
                 <p className="text-gray-500 mb-8">Last updated: December 16, 2025</p>
 
                 <div className="space-y-8 text-gray-700 dark:text-gray-300 leading-relaxed">
                     <section>
-                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">1. Acceptance of Terms</h2>
+                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">1. Client Cancellation</h2>
                         <p>
-                            By accessing and using QuickStaff ("Service"), you agree to abide by these Terms of Service. If you do not agree, you must not use our platform.
+                            Clients may cancel a booking up to 24 hours before the scheduled service time for a full refund. Cancellations made within 24 hours may be subject to a cancellation fee of up to 50% of the service cost.
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">2. User Responsibilities</h2>
+                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">2. Worker Cancellation</h2>
                         <p>
-                            Users are responsible for maintaining the confidentiality of their account credentials and are fully responsible for all activities that occur under their account.
+                            If a worker cancels, the client will receive a full refund immediately. Workers who frequently cancel accepted jobs may face penalties or account suspension.
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">3. Booking & Payments</h2>
+                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">3. No-Shows</h2>
                         <p>
-                            All bookings made through QuickStaff are binding. We act as a facilitator; the actual contract is between the Client and the Worker.
+                            If a client is not present at the location and time of service, the worker will wait for 15 minutes. After this, it is considered a no-show, and no refund will be issued.
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">4. Prohibited Conduct</h2>
+                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">4. Weather & Emergencies</h2>
                         <p>
-                            Users must not harass, abuse, or harm another person or group, or use the Service for any illegal activities.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold mb-3 text-gray-800 dark:text-white">5. Termination</h2>
-                        <p>
-                            We reserve the right to suspend or terminate your account at our discretion if you violate these Terms.
+                            In cases of severe weather or emergencies, cancellations may be made without penalty, subject to verification.
                         </p>
                     </section>
                 </div>
@@ -71,4 +64,4 @@ const TermsOfServicePage = () => {
     );
 };
 
-export default TermsOfServicePage;
+export default CancellationPolicyPage;
