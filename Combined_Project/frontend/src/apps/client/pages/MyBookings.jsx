@@ -32,8 +32,8 @@ const MyBookings = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
+
 
       const statusMap = {
         upcoming: "all_active",
@@ -55,7 +55,7 @@ const MyBookings = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          // Adjust for potential backend response format { bookings: [] }
+
           setBookings(prev => ({ ...prev, [activeTab]: data.bookings || data }));
         }
       }
@@ -70,7 +70,7 @@ const MyBookings = () => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
 
-    // Auto-remove after 3 seconds
+
     setTimeout(() => {
       removeToast(id);
     }, 3000);
@@ -133,7 +133,7 @@ const MyBookings = () => {
 
       <div>{section}</div>
 
-      {/* Toast Notifications */}
+
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </main>
   );
@@ -164,9 +164,10 @@ const Tab = ({ label, icon, badge, isActive, onClick }) => (
 const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortOption, setSortOption] = useState("Date (Soonest)"); // "Date (Soonest)", "Date (Latest)", "Status"
+  const [sortOption, setSortOption] = useState("Date (Soonest)");
   const [monthOffset, setMonthOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState(null); // YYYY-MM-DD string
+  const [selectedDate, setSelectedDate] = useState(null);
+
   const [viewBooking, setViewBooking] = useState(null);
   const [rescheduleBooking, setRescheduleBooking] = useState(null);
 
@@ -192,7 +193,6 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
     }
   };
 
-  // Filter and Sort Logic
   const filteredBookings = useMemo(() => {
     if (!bookings) return [];
 
@@ -204,7 +204,7 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
         b.service_type?.toLowerCase().includes(searchLower) ||
         b.status?.toLowerCase().includes(searchLower);
 
-      // 2. Calendar Filter
+
       let matchesDate = true;
       if (selectedDate) {
         matchesDate = b.booking_date.startsWith(selectedDate);
@@ -213,7 +213,7 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
       return matchesSearch && matchesDate;
     });
 
-    // 3. Sort
+
     result.sort((a, b) => {
       const dateA = new Date(a.booking_date + 'T' + a.start_time);
       const dateB = new Date(b.booking_date + 'T' + b.start_time);
@@ -223,7 +223,7 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
       } else if (sortOption === "Status") {
         return a.status.localeCompare(b.status);
       } else {
-        // Date (Soonest) - Default
+
         return dateA - dateB;
       }
     });
@@ -231,19 +231,14 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
     return result;
   }, [bookings, searchTerm, sortOption, selectedDate]);
 
-  // Calendar Helpers
+
   const currentDate = new Date();
   currentDate.setMonth(currentDate.getMonth() + monthOffset);
   const currentMonthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay(); // 0 = Sun
-
-  // Create array of days for grid
   const calendarDays = [];
-  // previous month padding
-  for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(null);
-  // current month days
+
   for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
   const getDayDetails = (day) => {
@@ -268,7 +263,7 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
     if (!day) return;
     const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0];
     if (selectedDate === dateStr) {
-      setSelectedDate(null); // Deselect
+      setSelectedDate(null);
     } else {
       setSelectedDate(dateStr);
     }
@@ -289,9 +284,8 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      {/* Calendar Section (Unchanged) */}
       <div className="w-full lg:w-[400px] flex-shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-6 rounded-xl h-fit">
-        {/* Dynamic Calendar UI */}
+
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{currentMonthName}</h2>
           <div className="flex items-center gap-2">
@@ -420,7 +414,6 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
                       <span>Manage Booking</span>
                       <span className="material-symbols-outlined !text-base">expand_more</span>
                     </button>
-                    {/* Hover Dropdown for Manage */}
                     <div className="absolute right-0 bottom-full mb-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10">
                       <button
                         onClick={() => handleCancelBooking(booking.id)}
@@ -439,26 +432,31 @@ const UpcomingSection = ({ bookings, loading, onRefresh, addToast }) => {
                 </div>
               </div>
             ))}
+
           </div>
         )}
       </div>
 
-      {viewBooking && (
-        <ViewBookingModal booking={viewBooking} onClose={() => setViewBooking(null)} />
-      )}
+      {
+        viewBooking && (
+          <ViewBookingModal booking={viewBooking} onClose={() => setViewBooking(null)} />
+        )
+      }
 
-      {rescheduleBooking && (
-        <RescheduleModal
-          booking={rescheduleBooking}
-          onClose={() => setRescheduleBooking(null)}
-          onSuccess={() => {
-            setRescheduleBooking(null);
-            onRefresh();
-          }}
-          addToast={addToast}
-        />
-      )}
-    </div>
+      {
+        rescheduleBooking && (
+          <RescheduleModal
+            booking={rescheduleBooking}
+            onClose={() => setRescheduleBooking(null)}
+            onSuccess={() => {
+              setRescheduleBooking(null);
+              onRefresh();
+            }}
+            addToast={addToast}
+          />
+        )
+      }
+    </div >
   );
 };
 
@@ -467,7 +465,7 @@ const ActiveSection = ({ bookings, loading, onRefresh, addToast }) => {
   const [rescheduleBooking, setRescheduleBooking] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter bookings based on search term
+
   const filteredBookings = useMemo(() => {
     if (!bookings) return [];
     if (!searchTerm) return bookings;
@@ -480,7 +478,7 @@ const ActiveSection = ({ bookings, loading, onRefresh, addToast }) => {
     );
   }, [bookings, searchTerm]);
 
-  // Helper to handle booking cancellation
+
   const handleCancelBooking = async (bookingId) => {
     if (confirm("Are you sure you want to cancel this booking?")) {
       try {
@@ -502,7 +500,6 @@ const ActiveSection = ({ bookings, loading, onRefresh, addToast }) => {
     }
   };
 
-  // Helper for dynamic status colors (copied for consistency)
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return "text-orange-500 bg-orange-500/10";
@@ -516,9 +513,8 @@ const ActiveSection = ({ bookings, loading, onRefresh, addToast }) => {
 
   if (loading) return <div className="text-center py-8 text-gray-500">Loading active bookings...</div>;
 
-  // Show empty state only if no bookings exist AT ALL (not just narrowed by search)
-  // Or if filtered results are empty, show "No matches"
   if (!bookings || bookings.length === 0) return <div className="p-8 text-center text-gray-500 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900">No active bookings found.</div>;
+
 
   return (
     <div className="space-y-6">
@@ -1371,18 +1367,16 @@ const ReviewModal = ({ booking, onClose, onSuccess }) => {
         },
         body: JSON.stringify({ rating, comment })
       });
-      console.log('Review response:', response); // Debugging
+
       if (response.ok) {
         onSuccess();
       } else {
-        // Fallback for demo if API fails
-        console.warn("Review API failed, simulating success for demo");
-        setTimeout(onSuccess, 500);
+        const errorData = await response.json();
+        alert(errorData.message || "Failed to submit review");
       }
     } catch (err) {
       console.error(err);
-      // Fallback for demo
-      onSuccess();
+      alert("An error occurred while submitting the review");
     } finally {
       setLoading(false);
     }

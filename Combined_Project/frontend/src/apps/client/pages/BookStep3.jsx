@@ -7,7 +7,7 @@ const BookStep3 = () => {
   const location = useLocation();
   const { worker, service, date, time, location: serviceLocation, duration, instructions } = location.state || {};
 
-  // Ensure we have data, otherwise redirect
+
   React.useEffect(() => {
     if (!worker || !date || !time) {
       navigate("/client/browse-staff");
@@ -36,7 +36,7 @@ const BookStep3 = () => {
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      // Convert 12h time (04:00 PM) to 24h (16:00:00) for strict ISO format
+
       let time24 = time;
       if (time && (time.includes('AM') || time.includes('PM'))) {
         const [timePart, modifier] = time.split(' ');
@@ -54,7 +54,7 @@ const BookStep3 = () => {
       }
 
 
-      // Get token from localStorage
+
       const token = localStorage.getItem('token') || localStorage.getItem('qs_token');
 
       const response = await fetch("/api/bookings", {
@@ -65,7 +65,8 @@ const BookStep3 = () => {
         },
         body: JSON.stringify({
           worker_id: worker.id,
-          service_id: null, // No specific service selected, defaults to General Service
+          service_id: null,
+
           booking_date: bookingDateTime.toISOString(),
           duration_hours: bookingDuration,
           total_price: subtotal,
@@ -106,7 +107,6 @@ const BookStep3 = () => {
     <main className="flex-1 overflow-y-auto p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Steps Nav */}
           <div className="md:col-span-1">
             <nav>
               <ul className="space-y-4">
@@ -147,11 +147,9 @@ const BookStep3 = () => {
             </nav>
           </div>
 
-          {/* Main Content */}
           <div className="md:col-span-3">
             <div className="bg-white dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-800 space-y-8">
 
-              {/* Booking Summary */}
               <div>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Booking Summary</h3>
                 <div className="space-y-4">

@@ -1,4 +1,4 @@
-// import reviewRoutes from "./routes/reviewRoutes.js";
+
 
 import express from 'express';
 import cors from 'cors';
@@ -17,8 +17,7 @@ import workerRoutes from './routes/workers.js';
 import reviewRoutes from './routes/reviews.js';
 import profileRoutes from './routes/profile.js';
 import usersRoutes from './routes/users.js';
-// import paymentRoutes from './routes/payments.js'; // Removed
-// app.use('/api/payments', paymentRoutes); // Removed
+
 import adminApiRoutes from './routes/adminApi.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
@@ -28,7 +27,7 @@ dotenv.config();
 
 const app = express();
 
-// Security + middleware
+
 app.use(helmet());
 app.use(
   cors({
@@ -39,11 +38,11 @@ app.use(
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Health check
+
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
-// Admin Panel API routes (without /api prefix for admin frontend compatibility)
 app.use('/', adminApiRoutes);
+
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -52,18 +51,18 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/worker-services', workerServiceRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
-// app.use('/api/payments', paymentRoutes);
+
 app.use('/api/saved-workers', savedWorkerRoutes);
 app.use('/api/saved-clients', savedClientRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', usersRoutes);
 
-// Global error handler
+
 app.use(errorHandler);
 
-// Start server after DB aux tables are ensured
 const port = process.env.PORT || 4000;
+
 
 ensureAuxTables()
   .then(() => {

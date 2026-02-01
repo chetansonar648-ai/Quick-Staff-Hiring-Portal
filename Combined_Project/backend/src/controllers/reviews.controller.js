@@ -9,7 +9,7 @@ export const createReview = async (req, res) => {
       [booking_id, req.user.id, reviewee_id, rating, comment]
     );
 
-    // Update worker profile stats
+
     await query(
       `UPDATE worker_profiles 
        SET 

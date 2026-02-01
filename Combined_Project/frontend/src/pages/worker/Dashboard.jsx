@@ -14,22 +14,21 @@ const WorkerDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Check if token exists
+
         const token = localStorage.getItem('token');
         if (!token) {
           setError("No authentication token found. Please log in first.");
           return;
         }
 
-        console.log("[DEBUG] Loading worker dashboard data...");
+
 
         const [statsData, userData] = await Promise.all([
           fetchWorkerStats(),
           fetchWorkerMe(),
         ]);
 
-        console.log("[DEBUG] Stats:", statsData);
-        console.log("[DEBUG] User:", userData);
+
 
         const activeJobs = await fetchWorkerJobs('active');
         const historyJobs = await fetchWorkerJobs('history');
@@ -54,7 +53,6 @@ const WorkerDashboard = () => {
   return (
     <div className="relative flex h-auto min-h-screen w-full group/design-root overflow-x-hidden font-display bg-background-light dark:bg-background-dark text-[#111618] dark:text-gray-200">
       <div className="flex min-h-screen w-full">
-        {/* Sidebar */}
         <aside className="w-64 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 hidden md:flex">
           <div className="flex items-center gap-3 p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="size-8 text-primary">
@@ -109,9 +107,7 @@ const WorkerDashboard = () => {
           </div>
         </aside>
 
-        {/* Main Content Wrapper */}
         <div className="flex-1 flex flex-col">
-          {/* Mobile Header */}
           <header className="md:hidden flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 bg-white dark:bg-background-dark sticky top-0 z-10">
             <div className="flex items-center gap-4 text-[#111618] dark:text-gray-100">
               <div className="size-6 text-primary">
@@ -126,7 +122,6 @@ const WorkerDashboard = () => {
             </button>
           </header>
 
-          {/* Main Area */}
           <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8 bg-background-light dark:bg-background-dark">
             <div className="mx-auto max-w-7xl">
               <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
@@ -135,7 +130,6 @@ const WorkerDashboard = () => {
                 </p>
               </div>
 
-              {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
                   <p className="text-[#111618] dark:text-gray-300 text-base font-medium leading-normal">Total Reviews</p>
@@ -159,7 +153,6 @@ const WorkerDashboard = () => {
                 </div>
               </div>
 
-              {/* Jobs Section */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                   <div className="pb-3">

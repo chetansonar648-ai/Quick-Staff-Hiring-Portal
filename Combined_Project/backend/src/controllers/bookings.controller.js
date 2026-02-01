@@ -231,7 +231,7 @@ export const createBookingReview = async (req, res) => {
   if (!rating) return res.status(400).json({ message: 'Rating is required' });
 
   try {
-    // 1. Verify booking exists, belongs to client, and get worker_id
+    // Verify booking exists, belongs to client, and get worker_id
     const bookingRes = await query(
       `SELECT * FROM bookings WHERE id = $1 AND client_id = $2`,
       [bookingId, req.user.id]
@@ -244,7 +244,7 @@ export const createBookingReview = async (req, res) => {
     const booking = bookingRes.rows[0];
     const workerId = booking.worker_id;
 
-    // 2. Check if already reviewed (optional but good)
+    // Check if already reviewed
     const existingReview = await query(
       `SELECT id FROM reviews WHERE booking_id = $1`,
       [bookingId]
@@ -253,7 +253,7 @@ export const createBookingReview = async (req, res) => {
       return res.status(400).json({ message: 'Booking already reviewed' });
     }
 
-    // 3. Insert Review
+    // Insert Review
     const reviewRes = await query(
       `INSERT INTO reviews (booking_id, reviewer_id, reviewee_id, rating, comment)
        VALUES ($1, $2, $3, $4, $5)
@@ -261,7 +261,7 @@ export const createBookingReview = async (req, res) => {
       [bookingId, req.user.id, workerId, rating, comment]
     );
 
-    // 4. Update Worker Profile Stats (UPSERT)
+    // Update Worker Profile Stats
     await query(
       `INSERT INTO worker_profiles (user_id, rating, total_reviews, completed_jobs)
        VALUES ($1, $2, 1, 0)
